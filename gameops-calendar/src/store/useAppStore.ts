@@ -65,7 +65,7 @@ interface AppState {
   templates: EventTemplate[];
 
   // === 视图状态 ===
-  currentView: 'calendar' | 'gantt' | 'board';
+  currentView: 'calendar' | 'gantt' | 'board' | 'dashboard';
   calendarView: CalendarView;
   ganttScale: GanttScale;
   currentDate: Date;
@@ -90,7 +90,7 @@ interface AppState {
   snackbar: { message: string; undoEntry?: UndoEntry | null } | null;
 
   // === Actions ===
-  setCurrentView: (view: 'calendar' | 'gantt' | 'board') => void;
+  setCurrentView: (view: 'calendar' | 'gantt' | 'board' | 'dashboard') => void;
   setCalendarView: (view: CalendarView) => void;
   setGanttScale: (scale: GanttScale) => void;
   setCurrentDate: (date: Date) => void;

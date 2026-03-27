@@ -25,6 +25,7 @@ export default function Sidebar({ expanded, onToggle, darkMode, onToggleDark }: 
     { key: 'calendar' as const, icon: Calendar, label: '日历' },
     { key: 'gantt' as const, icon: BarChart3, label: '时间线' },
     { key: 'board' as const, icon: LayoutGrid, label: '看板' },
+    { key: 'dashboard' as const, icon: PieChart, label: '数据面板' },
   ];
 
   const Tooltip = ({ text }: { text: string }) => !expanded ? (

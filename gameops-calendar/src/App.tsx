@@ -65,6 +65,7 @@ export default function App() {
           {currentView === 'calendar' && <CalendarView />}
           {currentView === 'gantt' && <GanttView />}
           {currentView === 'board' && <BoardView />}
+          {currentView === 'dashboard' && <DashboardView />}
           <DetailPanel />
         </div>
       </div>
