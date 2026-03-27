@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>暗区突围 · 五行战术终端 — 主界面视觉设计</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-dark: #0D0F12;
+    --bg-mid: #1A1D24;
+    --bg-card: #22262F;
+    --bg-card-hover: #2A2F3A;
+    --text-white: #E8E8E8;
+    --text-gray: #8A8F9A;
+    --text-muted: #5A5F6A;
+    --gold: #C8A84E;
+    --wood: #4A7A3E;
+    --water: #3A6B8C;
+    --fire: #8B3A2A;
+    --earth: #7A6A4A;
+    --line: #2A2F3A;
+    --line-light: #3A3F4A;
+    --scan-green: #3A6B3A;
+  }
+
+  body {
+    background: #080A0D;
+    font-family: 'Noto Sans SC', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 40px 20px;
+    color: var(--text-white);
+  }
+
+  .page-wrapper {
+    display: flex;
+    gap: 60px;
+    max-width: 1400px;
+    align-items: flex-start;
+  }
+
+  /* ── 手机模拟器 ── */
+  .phone-frame {
+    width: 390px;
+    min-width: 390px;
+    height: 844px;
+    background: var(--bg-dark);
+    border-radius: 40px;
+    border: 3px solid #2A2F3A;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 60px rgba(0,0,0,0.8), 0 0 120px rgba(200,168,78,0.05);
+    flex-shrink: 0;
+  }
+
+  /* CRT扫描线叠加 */
+  .phone-frame::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(200,168,78,0.015) 2px,
+      rgba(200,168,78,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 10;
+    border-radius: 40px;
+  }
+
+  /* 扫描线动画 */
+  .phone-frame::after {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: 0; right: 0;
+    height: 200%;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      transparent 49.5%,
+      rgba(200,168,78,0.06) 49.5%,
+      rgba(200,168,78,0.06) 50.5%,
+      transparent 50.5%,
+      transparent 100%
+    );
+    animation: scanline 4s linear infinite;
+    pointer-events: none;
+    z-index: 11;
+  }
+
+  @keyframes scanline {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(50%); }
+  }
+
+  .phone-content {
+    padding: 50px 0 30px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── 顶部状态栏 ── */
+  .status-bar {
+    padding: 0 20px;
+    height: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  /* ── 标题栏 ── */
+  .header {
+    padding: 12px 20px 8px;
+    border-bottom: 1px solid var(--line);
+    position: relative;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--gold);
+  }
+
+  .header-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    margin-bottom: 2px;
+  }
+
+  .header-subtitle {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-white);
+    letter-spacing: 4px;
+  }
+
+  .header-currency {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    text-align: right;
+  }
+
+  .currency-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+
+  .currency-value {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  /* ── 活动倒计时 ── */
+  .timer-bar {
+    padding: 6px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(200,168,78,0.04);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .timer-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .timer-text span {
+    color: var(--gold);
+  }
+
+  /* ── 五行扫描区域 ── */
+  .scan-area {
+    flex: 1;
+    margin: 12px 16px;
+    background: #0A0D12;
+    border: 1px solid var(--line-light);
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 网格背景 */
+  .scan-area::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image:
+      linear-gradient(rgba(200,168,78,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,168,78,0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
+    pointer-events: none;
+  }
+
+  /* 雷达扫描动画 */
+  .radar-sweep {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 300px;
+    height: 300px;
+    margin: -150px 0 0 -150px;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      transparent 340deg,
+      rgba(200,168,78,0.08) 350deg,
+      rgba(200,168,78,0.15) 360deg
+    );
+    animation: radar-rotate 3s linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes radar-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* 雷达圆环 */
+  .radar-rings {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .radar-ring {
+    position: absolute;
+    border: 1px solid rgba(200,168,78,0.06);
+    border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .radar-ring:nth-child(1) { width: 120px; height: 120px; }
+  .radar-ring:nth-child(2) { width: 200px; height: 200px; }
+  .radar-ring:nth-child(3) { width: 280px; height: 280px; }
+
+  /* 十字线 */
+  .crosshair-h, .crosshair-v {
+    position: absolute;
+    background: rgba(200,168,78,0.04);
+    pointer-events: none;
+  }
+  .crosshair-h {
+    width: 100%; height: 1px;
+    top: 50%; left: 0;
+  }
+  .crosshair-v {
+    width: 1px; height: 100%;
+    top: 0; left: 50%;
+  }
+
+  .scan-label {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: rgba(200,168,78,0.3);
+    letter-spacing: 1px;
+  }
+
+  .scan-label-right {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: rgba(200,168,78,0.3);
+    text-align: right;
+  }
+
+  /* ── 五行元素排列 ── */
+  .elements-row {
+    display: flex;
+    gap: 10px;
+    z-index: 2;
+    position: relative;
+  }
+
+  .element-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+
+  .element-item:hover {
+    transform: scale(1.08);
+  }
+
+  .element-badge {
+    width: 52px;
+    height: 52px;
+    transform: rotate(45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all 0.3s;
+  }
+
+  .element-badge-inner {
+    position: absolute;
+    inset: 0;
+    border: 1.5px solid;
+    opacity: 0.4;
+    background: rgba(0,0,0,0.3);
+  }
+
+  .element-badge-glow {
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    filter: blur(12px);
+    opacity: 0.15;
+    pointer-events: none;
+  }
+
+  .element-item:hover .element-badge-glow {
+    opacity: 0.35;
+  }
+
+  .element-char {
+    transform: rotate(-45deg);
+    font-size: 20px;
+    font-weight: 900;
+    z-index: 2;
+    text-shadow: 0 0 10px currentColor;
+  }
+
+  .element-en {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 1px;
+    opacity: 0.5;
+    margin-top: 4px;
+  }
+
+  .element-stars {
+    display: flex;
+    gap: 2px;
+    font-size: 10px;
+  }
+
+  .star-filled { opacity: 1; }
+  .star-empty { opacity: 0.2; }
+
+  .element-level {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    opacity: 0.4;
+  }
+
+  /* 金元素特殊高亮 */
+  .element-item.active .element-badge-inner {
+    opacity: 0.7;
+    box-shadow: inset 0 0 15px rgba(200,168,78,0.2);
+  }
+
+  .element-item.active .element-badge-glow {
+    opacity: 0.4;
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.25; }
+    50% { opacity: 0.5; }
+  }
+
+  /* ── 扫描按钮 ── */
+  .scan-btn-area {
+    padding: 10px 16px;
+  }
+
+  .scan-btn {
+    width: 100%;
+    height: 52px;
+    background: rgba(200,168,78,0.08);
+    border: 1.5px solid var(--gold);
+    color: var(--gold);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 15px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .scan-btn:hover {
+    background: rgba(200,168,78,0.15);
+    box-shadow: 0 0 20px rgba(200,168,78,0.15);
+  }
+
+  .scan-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(200,168,78,0.08), transparent);
+    animation: btn-sweep 2.5s linear infinite;
+  }
+
+  @keyframes btn-sweep {
+    0% { left: -100%; }
+    100% { left: 100%; }
+  }
+
+  .scan-btn-cost {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+
+  .scan-btn-multi {
+    width: 100%;
+    height: 36px;
+    margin-top: 6px;
+    background: rgba(200,168,78,0.03);
+    border: 1px solid var(--line-light);
+    color: var(--text-muted);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+
+  .scan-btn-multi:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  /* ── 底部功能栏 ── */
+  .bottom-bar {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 8px;
+  }
+
+  .bottom-btn {
+    flex: 1;
+    height: 44px;
+    background: var(--bg-card);
+    border: 1px solid var(--line-light);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .bottom-btn:hover {
+    border-color: var(--gold);
+    background: var(--bg-card-hover);
+  }
+
+  .bottom-btn-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-white);
+  }
+
+  .bottom-btn-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+
+  /* ── 底部进度条 ── */
+  .progress-area {
+    padding: 8px 16px 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .progress-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .progress-bar {
+    height: 3px;
+    background: var(--bg-card);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 35%;
+    background: linear-gradient(90deg, var(--gold), #E8C864);
+    border-radius: 2px;
+    position: relative;
+  }
+
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: -2px;
+    width: 6px;
+    height: 7px;
+    background: var(--gold);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--gold);
+  }
+
+  /* ── 右侧标注面板 ── */
+  .annotations {
+    flex: 1;
+    max-width: 480px;
+    padding-top: 20px;
+  }
+
+  .anno-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  .anno-main-title {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--text-white);
+    margin-bottom: 6px;
+    letter-spacing: 2px;
+  }
+
+  .anno-desc {
+    font-size: 13px;
+    color: var(--text-gray);
+    line-height: 1.6;
+    margin-bottom: 30px;
+  }
+
+  .anno-section {
+    margin-bottom: 20px;
+    padding: 16px 18px;
+    background: var(--bg-mid);
+    border-left: 3px solid var(--gold);
+    position: relative;
+  }
+
+  .anno-section-tag {
+    position: absolute;
+    top: -8px;
+    left: 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--bg-dark);
+    background: var(--gold);
+    padding: 1px 8px;
+    letter-spacing: 1px;
+  }
+
+  .anno-section h3 {
+    font-size: 14px;
+    color: var(--text-white);
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  .anno-section p {
+    font-size: 12px;
+    color: var(--text-gray);
+    line-height: 1.7;
+  }
+
+  .anno-section.water { border-color: var(--water); }
+  .anno-section.water .anno-section-tag { background: var(--water); }
+  .anno-section.fire { border-color: var(--fire); }
+  .anno-section.fire .anno-section-tag { background: var(--fire); color: var(--text-white); }
+  .anno-section.wood { border-color: var(--wood); }
+  .anno-section.wood .anno-section-tag { background: var(--wood); color: var(--text-white); }
+  .anno-section.earth { border-color: var(--earth); }
+  .anno-section.earth .anno-section-tag { background: var(--earth); color: var(--text-white); }
+
+  /* ── 色彩参考条 ── */
+  .color-strip {
+    display: flex;
+    gap: 6px;
+    margin-top: 24px;
+  }
+
+  .color-chip {
+    flex: 1;
+    height: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    position: relative;
+  }
+
+  .color-chip-label {
+    font-size: 10px;
+    font-weight: 700;
+    margin-bottom: 1px;
+  }
+
+  /* ── 全局页面标题 ── */
+  .page-title-area {
+    text-align: center;
+    margin-bottom: 40px;
+    width: 100%;
+  }
+
+  .page-title-area h1 {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    color: var(--gold);
+    letter-spacing: 4px;
+    margin-bottom: 4px;
+  }
+
+  .page-title-area h2 {
+    font-size: 20px;
+    color: var(--text-muted);
+    font-weight: 300;
+    letter-spacing: 2px;
+  }
+
+  .full-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+</style>
+</head>
+<body>
+<div class="full-page">
+  <div class="page-title-area">
+    <h1>ARENA BREAKOUT // FIVE ELEMENTS TACTICAL TERMINAL</h1>
+    <h2>暗区突围 · 五行战术终端 · 主界面视觉设计</h2>
+  </div>
+
+  <div class="page-wrapper">
+    <!-- 手机模拟器 -->
+    <div class="phone-frame">
+      <div class="phone-content">
+        <!-- 状态栏 -->
+        <div class="status-bar">
+          <span>09:41</span>
+          <span>/// TACTICAL TERMINAL v2.6 ///</span>
+          <span>▮▮▮▮ 5G</span>
+        </div>
+
+        <!-- 标题栏 -->
+        <div class="header">
+          <div class="header-title">FIVE ELEMENTS TERMINAL //</div>
+          <div class="header-subtitle">五行战术终端</div>
+          <div class="header-currency">
+            <div class="currency-label">暗区行动令 ACTION PASS</div>
+            <div class="currency-value">340</div>
+          </div>
+        </div>
+
+        <!-- 活动倒计时 -->
+        <div class="timer-bar">
+          <div class="timer-text">OPERATION WINDOW // 行动窗口</div>
+          <div class="timer-text">剩余 <span>12天 03:42:18</span></div>
+        </div>
+
+        <!-- 五行扫描区 -->
+        <div class="scan-area">
+          <div class="crosshair-h"></div>
+          <div class="crosshair-v"></div>
+          <div class="radar-rings">
+            <div class="radar-ring"></div>
+            <div class="radar-ring"></div>
+            <div class="radar-ring"></div>
+          </div>
+          <div class="radar-sweep"></div>
+          <div class="scan-label">SCANNING...<br>FREQ: 5E.HZ<br>MODE: DETECT</div>
+          <div class="scan-label-right">SIGNAL: ████░░<br>LOCK: STANDBY<br>PWR: NOMINAL</div>
+
+          <div class="elements-row">
+            <!-- 金 — 已激活 3星 -->
+            <div class="element-item active">
+              <div class="element-badge">
+                <div class="element-badge-glow" style="background: var(--gold);"></div>
+                <div class="element-badge-inner" style="border-color: var(--gold);"></div>
+                <span class="element-char" style="color: var(--gold);">金</span>
+              </div>
+              <div class="element-en" style="color: var(--gold);">METAL</div>
+              <div class="element-stars" style="color: var(--gold);">
+                <span class="star-filled">★</span>
+                <span class="star-filled">★</span>
+                <span class="star-filled">★</span>
+                <span class="star-empty">★</span>
+                <span class="star-empty">★</span>
+              </div>
+            </div>
+
+            <!-- 木 — 1星 -->
+            <div class="element-item">
+              <div class="element-badge">
+                <div class="element-badge-glow" style="background: var(--wood);"></div>
+                <div class="element-badge-inner" style="border-color: var(--wood);"></div>
+                <span class="element-char" style="color: var(--wood);">木</span>
+              </div>
+              <div class="element-en" style="color: var(--wood);">WOOD</div>
+              <div class="element-stars" style="color: var(--wood);">
+                <span class="star-filled">★</span>
+                <span class="star-empty">★</span>
+                <span class="star-empty">★</span>
+                <span class="star-empty">★</span>
+                <span class="star-empty">★</span>
+              </div>
+            </div>
+
+            <!-- 水 — 0星 -->
+            <div class="element-item">
+              <div class="element-badge">
+                <div class="element-badge-glow" style="background: var(--water);"></div>
+                <div class="element-badge-inner" style="border-color: var(--water);"></div>
+                <span class="element-char" style="color: var(--water);">水</span>
+              </div>
+              <div class="element-en" style="color: var(--water);">WATER</div>
+              <div class="element-stars" style="color: var(--water);">
+                <span class="star-empty">★</span>
+                <span class="star-empty">★</span>
+                <span class="star-empty">★</span>
+                <span class="star-empty">★</span>
+                <span class="star-empty">★</span>
+              </div>
+            </div>
+
+            <!-- 火 — 2星 -->
+            <div class="element-item">
+              <div class="element-badge">
+                <div class="element-badge-glow" style="background: var(--fire);"></div>
+                <div class="element-badge-inner" style="border-color: var(--fire);"></div>
+                <span class="element-char" style="color: var(--fire);">火</span>
+              </div>
+              <div class="element-en" style="color: var(--fire);">FIRE</div>
+              <div class="element-stars" style="color: var(--fire);">
+                <span class="star-filled">★</span>
+                <span class="star-filled">★</span>
+                <span class="star-empty">★</span>
+                <span class="star-empty">★</span>
+                <span class="star-empty">★</span>
+              </div>
+            </div>
+
+            <!-- 土 — 0星 -->
+            <div class="element-item">
+              <div class="element-badge">
+                <div class="element-badge-glow" style="background: var(--earth);"></div>
+                <div class="element-badge-inner" style="border-color: var(--earth);"></div>
+                <span class="element-char" style="color: var(--earth);">土</span>
+              </div>
+              <div class="element-en" style="color: var(--earth);">EARTH</div>
+              <div class="element-stars" style="color: var(--earth);">
+                <span class="star-empty">★</span>
+                <span class="star-empty">★</span>
+                <span class="star-empty">★</span>
+                <span class="star-empty">★</span>
+                <span class="star-empty">★</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 扫描按钮 -->
+        <div class="scan-btn-area">
+          <button class="scan-btn">
+            [ 启动扫描 ] INITIATE SCAN
+          </button>
+          <div class="scan-btn-cost" style="text-align:center; margin-top:3px;">消耗 1 暗区行动令 // COST: 1 ACTION PASS</div>
+          <button class="scan-btn-multi">
+            [ 10连扫描 ] ×10 MULTI-SCAN // 消耗 10 行动令
+          </button>
+        </div>
+
+        <!-- 底部功能按钮 -->
+        <div class="bottom-bar">
+          <div class="bottom-btn">
+            <div class="bottom-btn-title">强化追加</div>
+            <div class="bottom-btn-sub">ENHANCE</div>
+          </div>
+          <div class="bottom-btn">
+            <div class="bottom-btn-title">物资兑换</div>
+            <div class="bottom-btn-sub">EXCHANGE</div>
+          </div>
+          <div class="bottom-btn">
+            <div class="bottom-btn-title">奖励预览</div>
+            <div class="bottom-btn-sub">REWARDS</div>
+          </div>
+        </div>
+
+        <!-- 底部进度 -->
+        <div class="progress-area">
+          <div class="progress-header">
+            <span class="progress-label">物资凭证 SUPPLY TOKEN</span>
+            <span class="progress-label">342 / 972</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧标注说明 -->
+    <div class="annotations">
+      <div class="anno-title">INTERACTION SPEC // 交互标注</div>
+      <div class="anno-main-title">主界面交互说明</div>
+      <div class="anno-desc">
+        以暗区突围「存在感美学」为基底，整体采用深黑底色 + CRT军事终端视觉语言。<br>
+        模拟90年代旧式军事电子屏幕的操作体验，功能信息优先，避免过度装饰。
+      </div>
+
+      <div class="anno-section">
+        <div class="anno-section-tag">A</div>
+        <h3>战术终端头部 HEADER</h3>
+        <p>
+          左侧黄铜色竖条标识活动品牌。英文终端代号 + 中文名称双层标题。<br>
+          右上角显示「暗区行动令」余额，采用等宽字体模拟LED数字显示。<br>
+          下方活动倒计时条，使用 "OPERATION WINDOW" 军事行动窗口概念。
+        </p>
+      </div>
+
+      <div class="anno-section water">
+        <div class="anno-section-tag">B</div>
+        <h3>五行扫描区 SCAN ZONE</h3>
+        <p>
+          核心交互区域。暗黑背景 + 网格线 + 雷达扫描动效，持续旋转的扫描线营造监控感。<br>
+          五行元素以菱形军事徽章排列，各自颜色独立发光。<br>
+          星级用★标记当前等级，点击单个元素可查看详情浮层。<br>
+          已激活元素有脉冲光晕动效，未激活元素低饱和度待机。
+        </p>
+      </div>
+
+      <div class="anno-section">
+        <div class="anno-section-tag">C</div>
+        <h3>扫描启动按钮 ACTION BUTTON</h3>
+        <p>
+          主CTA按钮，黄铜色边框 + 内部光线扫过动效。<br>
+          按下触发：CRT信号干扰(0.3s) → 雷达扫描(0.7s) → 元素锁定(0.5s) → 结果揭示(0.5s)。<br>
+          10连扫描按钮在下方，精简动效每次0.5秒，最后汇总展示。
+        </p>
+      </div>
+
+      <div class="anno-section fire">
+        <div class="anno-section-tag">D</div>
+        <h3>底部功能栏 FUNCTION BAR</h3>
+        <p>
+          三个功能入口并排：「强化追加」进入升星博弈界面，「物资兑换」进入保底商店，「奖励预览」查看全部奖品。<br>
+          采用暗区突围标准的深灰卡片样式，悬停时边框亮起黄铜色。
+        </p>
+      </div>
+
+      <div class="anno-section earth">
+        <div class="anno-section-tag">E</div>
+        <h3>物资凭证进度 SUPPLY PROGRESS</h3>
+        <p>
+          底部常驻进度条，显示累计获得的暗区物资凭证数量。<br>
+          满972枚可兑换任意一套五行战术套装。黄铜色进度条 + 尾部发光点。<br>
+          每次扫描/碎裂均产出凭证，保证玩家持续积累保底。
+        </p>
+      </div>
+
+      <!-- 色彩条 -->
+      <div class="color-strip">
+        <div class="color-chip" style="background: var(--gold);">
+          <span class="color-chip-label" style="color:#0D0F12;">金</span>
+          <span style="color:#0D0F12;">#C8A84E</span>
+        </div>
+        <div class="color-chip" style="background: var(--wood);">
+          <span class="color-chip-label" style="color:#E8E8E8;">木</span>
+          <span style="color:#E8E8E8;">#4A7A3E</span>
+        </div>
+        <div class="color-chip" style="background: var(--water);">
+          <span class="color-chip-label" style="color:#E8E8E8;">水</span>
+          <span style="color:#E8E8E8;">#3A6B8C</span>
+        </div>
+        <div class="color-chip" style="background: var(--fire);">
+          <span class="color-chip-label" style="color:#E8E8E8;">火</span>
+          <span style="color:#E8E8E8;">#8B3A2A</span>
+        </div>
+        <div class="color-chip" style="background: var(--earth);">
+          <span class="color-chip-label" style="color:#E8E8E8;">土</span>
+          <span style="color:#E8E8E8;">#7A6A4A</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

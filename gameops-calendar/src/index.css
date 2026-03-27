@@ -1,0 +1,186 @@
+@import "tailwindcss";
+
+/* ============================================
+   CSS 变量体系 — 支持亮色/暗色主题
+   ============================================ */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #f1f3f4;
+  --bg-hover: #f1f3f4;
+  --bg-active: #d3e3fd;
+  --bg-surface: #ffffff;
+  --bg-overlay: rgba(0,0,0,0.25);
+  --bg-card: #ffffff;
+
+  --border-primary: #e0e0e0;
+  --border-secondary: #dadce0;
+  --border-tertiary: #f1f3f4;
+
+  --text-primary: #202124;
+  --text-secondary: #3c4043;
+  --text-tertiary: #5f6368;
+  --text-muted: #70757a;
+  --text-placeholder: #9aa0a6;
+  --text-disabled: #b0b0b0;
+  --text-nav: #444746;
+  --text-active: #041e49;
+
+  --accent: #1a73e8;
+  --accent-hover: #1765cc;
+  --accent-bg: #e8f0fe;
+  --accent-bg-deep: #d3e3fd;
+
+  --shadow-sm: 0 1px 3px rgba(60,64,67,.16);
+  --shadow-md: 0 1px 3px rgba(60,64,67,.3);
+  --shadow-lg: 0 4px 8px 3px rgba(60,64,67,.15);
+  --shadow-modal: 0 24px 48px rgba(60,64,67,.15);
+  --shadow-dropdown: 0 1px 3px 0 rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
+
+  --scrollbar-thumb: #dadce0;
+  --scrollbar-thumb-hover: #bdc1c6;
+
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%235f6368' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+}
+
+.dark {
+  color-scheme: dark;
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #252525;
+  --bg-tertiary: #2d2d2d;
+  --bg-hover: #333333;
+  --bg-active: #1a3a5c;
+  --bg-surface: #2d2d2d;
+  --bg-overlay: rgba(0,0,0,0.5);
+  --bg-card: #2d2d2d;
+
+  --border-primary: #3a3a3a;
+  --border-secondary: #424242;
+  --border-tertiary: #333333;
+
+  --text-primary: #e8eaed;
+  --text-secondary: #d2d4d7;
+  --text-tertiary: #9aa0a6;
+  --text-muted: #7f8589;
+  --text-placeholder: #5f6368;
+  --text-disabled: #5f6368;
+  --text-nav: #bdc1c6;
+  --text-active: #c2e7ff;
+
+  --accent: #8ab4f8;
+  --accent-hover: #aecbfa;
+  --accent-bg: #1a3a5c;
+  --accent-bg-deep: #1a3a5c;
+
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.3);
+  --shadow-md: 0 1px 3px rgba(0,0,0,.5);
+  --shadow-lg: 0 4px 8px 3px rgba(0,0,0,.3);
+  --shadow-modal: 0 24px 48px rgba(0,0,0,.4);
+  --shadow-dropdown: 0 1px 3px 0 rgba(0,0,0,.5), 0 4px 8px 3px rgba(0,0,0,.3);
+
+  --scrollbar-thumb: #424242;
+  --scrollbar-thumb-hover: #616161;
+
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%239e9e9e' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+}
+
+/* ============================================ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root { width: 100vw; height: 100vh; }
+
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(.97) } to { opacity: 1; transform: scale(1) } }
+@keyframes slideRight { from { transform: translateX(16px); opacity: 0 } to { transform: translateX(0); opacity: 1 } }
+
+.animate-fade-in { animation: fadeIn .15s ease-out }
+.animate-scale-in { animation: scaleIn .15s ease-out }
+.animate-slide-right { animation: slideRight .2s ease-out }
+
+::-webkit-scrollbar { width: 8px; height: 8px }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); border: 2px solid transparent; background-clip: padding-box }
+::-webkit-scrollbar-track { background: transparent }
+
+.dropdown-menu {
+  animation: fadeIn .1s ease-out;
+  background: var(--bg-surface);
+  border-radius: 8px;
+  box-shadow: var(--shadow-dropdown);
+}
+
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 0 8px; height: 20px;
+  border-radius: 10px; font-size: 12px; font-weight: 500;
+}
+
+.input {
+  width: 100%; padding: 12px 16px;
+  background: var(--bg-surface); border: 1px solid var(--border-secondary); border-radius: 8px;
+  font-size: 14px; color: var(--text-secondary); outline: none;
+  transition: border-color .15s;
+}
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(26,115,232,.2) }
+.dark .input:focus { box-shadow: 0 0 0 2px rgba(138,180,248,.2) }
+.input::placeholder { color: var(--text-placeholder) }
+select.input {
+  cursor: pointer; appearance: none;
+  background-image: var(--select-arrow);
+  background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+}
+
+.btn-primary {
+  background: #1a73e8; color: #fff; border: none; border-radius: 24px;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: background .15s, box-shadow .15s;
+}
+.btn-primary:hover { background: #1765cc; box-shadow: var(--shadow-md) }
+.dark .btn-primary { background: #8ab4f8; color: #202124 }
+.dark .btn-primary:hover { background: #aecbfa }
+
+/* theme-aware utility classes */
+.t-bg { background: var(--bg-primary) }
+.t-bg-s { background: var(--bg-secondary) }
+.t-bg-t { background: var(--bg-tertiary) }
+.t-bg-surface { background: var(--bg-surface) }
+.t-bg-card { background: var(--bg-card) }
+.t-bg-hover:hover { background: var(--bg-hover) }
+.t-bg-active { background: var(--bg-active) }
+.t-border { border-color: var(--border-primary) }
+.t-border-s { border-color: var(--border-secondary) }
+.t-border-t { border-color: var(--border-tertiary) }
+.t-text { color: var(--text-primary) }
+.t-text-s { color: var(--text-secondary) }
+.t-text-t { color: var(--text-tertiary) }
+.t-text-m { color: var(--text-muted) }
+.t-text-p { color: var(--text-placeholder) }
+.t-text-nav { color: var(--text-nav) }
+.t-accent { color: var(--accent) }
+.t-shadow-sm { box-shadow: var(--shadow-sm) }
+.t-shadow-modal { box-shadow: var(--shadow-modal) }
+
+/* 无障碍: focus-visible ring */
+button:focus-visible, [role="button"]:focus-visible, [tabindex="0"]:focus-visible, a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.input:focus-visible {
+  outline: none; /* 已有 box-shadow focus 样式 */
+}
+
+/* 响应式：窄屏适配 */
+@media (max-width: 768px) {
+  .dropdown-menu { max-width: calc(100vw - 32px); }
+}
