@@ -265,11 +265,11 @@ export default function GanttView() {
             const isDragging = dragInfo?.eventId === evt.id;
             const offsetPx = isDragging ? dragOffset : 0;
             return (
-              <div key={evt.id} className="absolute flex items-center" style={{ top: idx * rowHeight + 10, left: bar.left + offsetPx, width: bar.width, height: rowHeight - 20, zIndex: isDragging ? 20 : 1 }}>
+              <div key={evt.id} className="absolute flex items-center" style={{ top: idx * rowHeight + 10, left: bar.left + offsetPx, width: bar.width, height: rowHeight - 20, zIndex: isDragging ? 30 : 1 }}>
                 <div
                   onMouseDown={(e) => handleMouseDown(e, evt)}
                   onClick={() => { if (!didDragRef.current) openDetailPanel(evt.id); }}
-                  className={`h-full w-full rounded-lg transition-shadow flex items-center px-3 gap-2 overflow-hidden ${isDragging ? 'shadow-lg opacity-80 cursor-grabbing' : 'cursor-grab hover:shadow-md'}`}
+                  className={`h-full w-full rounded-lg transition-shadow flex items-center px-4 gap-2 overflow-hidden ${isDragging ? 'shadow-lg opacity-80 cursor-grabbing' : 'cursor-grab hover:shadow-md'}`}
                   style={{ backgroundColor: `${c}20`, borderLeft: `4px solid ${c}` }}>
                   <span className="text-[13px] font-medium truncate" style={{ color: 'var(--text-secondary)' }}>{evt.title}</span>
                   <span className="text-[11px] font-medium flex-shrink-0 ml-auto" style={{ color: PRIORITY_CONFIG[evt.priority].color }}>{evt.priority}</span>

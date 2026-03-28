@@ -96,7 +96,7 @@ export default function DetailPanel() {
         )}
 
         {/* 标题区 */}
-        <div className="px-6 pt-5 pb-3">
+        <div className="px-6 pt-5 pb-4">
           <div className="flex items-center gap-2 mb-3">
             <span className="badge" style={{ backgroundColor: `${catColor}18`, color: catColor }}>{CATEGORY_NAMES[evt.category]}</span>
             <span className="text-[13px]" style={{ color: 'var(--text-tertiary)' }}>{SUBTYPE_NAMES[evt.subType]}</span>

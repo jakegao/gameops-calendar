@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import {
   Calendar, BarChart3, LayoutGrid, Plus, Menu,
-  Sparkles, Download, AlertTriangle, Moon, Sun,
+  Sparkles, Download, AlertTriangle, Moon, Sun, BarChart2,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore.ts';
 import { CATEGORY_COLORS, CATEGORY_NAMES } from '../constants/index.ts';
@@ -25,7 +25,7 @@ export default function Sidebar({ expanded, onToggle, darkMode, onToggleDark }: 
     { key: 'calendar' as const, icon: Calendar, label: '日历' },
     { key: 'gantt' as const, icon: BarChart3, label: '时间线' },
     { key: 'board' as const, icon: LayoutGrid, label: '看板' },
-    { key: 'dashboard' as const, icon: PieChart, label: '数据面板' },
+    { key: 'dashboard' as const, icon: BarChart2, label: '数据面板' },
   ];
 
   const Tooltip = ({ text }: { text: string }) => !expanded ? (
@@ -140,7 +140,7 @@ export default function Sidebar({ expanded, onToggle, darkMode, onToggleDark }: 
       )}
 
       {/* 底部：主题切换 */}
-      <div className="mt-auto px-2 pb-3">
+      <div className="mt-auto px-2 pb-4">
         <div className="relative group">
           <button onClick={onToggleDark}
             className={`w-full flex items-center gap-4 rounded-full h-12 t-bg-hover transition-colors ${expanded ? 'px-5' : 'justify-center'}`}

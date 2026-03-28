@@ -198,7 +198,7 @@ export default function EventModal() {
             <div className="flex flex-wrap gap-2">
               {ROLES.map((r) => (
                 <button key={r} onClick={() => toggleRole(r)}
-                  className={`h-9 px-4 rounded-full text-[14px] font-medium border transition-all ${
+                  className={`h-10 px-4 rounded-full text-[14px] font-medium border transition-all ${
                     teamRoles.includes(r)
                       ? 'border-[#1a73e8]'
                       : 'hover:opacity-80'

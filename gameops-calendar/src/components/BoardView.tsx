@@ -81,7 +81,7 @@ export default function BoardView() {
               <span className="text-[14px] font-medium" style={{ color: 'var(--text-secondary)' }}>{config.name}</span>
               <span className="ml-auto text-[13px] font-medium" style={{ color: 'var(--text-tertiary)' }}>{col.length}</span>
             </div>
-            <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-2">
+            <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
               {col.map((evt) => (
                 <div key={evt.id} draggable role="button" tabIndex={0} aria-label={evt.title}
                   onDragStart={(e) => { e.dataTransfer.setData('text/plain', evt.id); e.currentTarget.style.opacity = '0.6'; }}

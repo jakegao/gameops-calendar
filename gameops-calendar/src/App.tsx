@@ -5,6 +5,7 @@ import TopBar from './components/TopBar.tsx';
 import CalendarView from './components/CalendarView.tsx';
 import GanttView from './components/GanttView.tsx';
 import BoardView from './components/BoardView.tsx';
+import DashboardView from './components/DashboardView.tsx';
 import EventModal from './components/EventModal.tsx';
 import DetailPanel from './components/DetailPanel.tsx';
 import TemplateModal from './components/TemplateModal.tsx';
@@ -12,7 +13,7 @@ import ExportModal from './components/ExportModal.tsx';
 import Snackbar from './components/Snackbar.tsx';
 import HelpModal from './components/HelpModal.tsx';
 
-const VIEW_LABELS = { calendar: '日历', gantt: '时间线', board: '看板' } as const;
+const VIEW_LABELS = { calendar: '日历', gantt: '时间线', board: '看板', dashboard: '数据面板' } as const;
 
 export default function App() {
   const { currentView, setCurrentView, openEventModal, isEventModalOpen, isTemplateModalOpen, isExportModalOpen, isDetailPanelOpen } = useAppStore();
@@ -48,6 +49,7 @@ export default function App() {
       case '1': e.preventDefault(); setCurrentView('calendar'); break;
       case '2': e.preventDefault(); setCurrentView('gantt'); break;
       case '3': e.preventDefault(); setCurrentView('board'); break;
+      case '4': e.preventDefault(); setCurrentView('dashboard'); break;
     }
   }, [isEventModalOpen, isTemplateModalOpen, isExportModalOpen, isDetailPanelOpen, showHelp, openEventModal, setCurrentView]);
 

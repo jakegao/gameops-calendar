@@ -63,16 +63,16 @@ export default function TopBar({ viewLabel }: Props) {
   const iconBtn = "w-10 h-10 rounded-full flex items-center justify-center t-bg-hover transition-colors";
 
   return (
-    <div className="h-16 flex items-center px-4 gap-2 border-b flex-shrink-0"
+    <div className="h-16 flex items-center px-5 gap-3 border-b flex-shrink-0"
       style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-primary)' }}>
 
       {/* V2-1: 视图标签 */}
-      <span className="text-[13px] font-medium px-3 py-1 rounded-full mr-1"
+      <span className="text-[13px] font-medium px-3 py-1.5 rounded-full mr-1"
         style={{ background: 'var(--accent-bg)', color: 'var(--accent)' }}>{viewLabel}</span>
 
       {/* 今天 + 前后翻页 */}
       <button onClick={goToday}
-        className="px-5 h-9 rounded-md border text-[14px] font-medium t-bg-hover transition-colors"
+        className="px-5 h-10 rounded-lg border text-[14px] font-medium t-bg-hover transition-colors"
         style={{ borderColor: 'var(--border-secondary)', color: 'var(--text-secondary)' }}>
         今天
       </button>

@@ -329,7 +329,7 @@ function DayView({ currentDate, events, holidays, openDetailPanel }: {
               style={{ top, height, left: `calc(${(idx % 3) * 33}% + 4px)`, width: `calc(${Math.min(33, 100 - (idx % 3) * 33)}% - 8px)`, backgroundColor: `${color}18`, borderLeft: `4px solid ${color}`, minWidth: 120 }}
               onClick={() => openDetailPanel(evt.id)} role="button" tabIndex={0} aria-label={evt.title}
               onKeyDown={(e) => { if (e.key === 'Enter') openDetailPanel(evt.id); }}>
-              <div className="p-2">
+              <div className="p-3">
                 <div className="text-[12px] font-medium truncate" style={{ color: 'var(--text-secondary)' }}>{evt.title}</div>
                 <div className="text-[11px] truncate" style={{ color: 'var(--text-tertiary)' }}>{evt.owner}</div>
               </div>
