@@ -12,10 +12,25 @@ function getSubTypes(cat: EventCategory): EventSubType[] {
   return (Object.keys(SUBTYPE_CATEGORY) as EventSubType[]).filter((st) => SUBTYPE_CATEGORY[st] === cat);
 }
 
+/* 通用输入框样式 */
+const inputStyle: React.CSSProperties = {
+  width: '100%', height: 42, borderRadius: 10, border: '1px solid var(--border-secondary)',
+  padding: '0 14px', fontSize: 14, background: 'var(--bg-tertiary)', color: 'var(--text-primary)',
+  outline: 'none', transition: 'border-color .12s, box-shadow .12s',
+};
+const inputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  e.currentTarget.style.borderColor = 'var(--accent)';
+  e.currentTarget.style.boxShadow = '0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent)';
+};
+const inputBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  e.currentTarget.style.borderColor = 'var(--border-secondary)';
+  e.currentTarget.style.boxShadow = 'none';
+};
+const inputErrStyle: React.CSSProperties = { ...inputStyle, borderColor: '#ff3b30' };
+
 export default function EventModal() {
   const { isEventModalOpen, editingEvent, closeEventModal, addEvent, updateEvent, defaultStartDate } = useAppStore();
   const events = useAppStore((s) => s.events);
-  const detectConflicts = useAppStore((s) => s.detectConflicts);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<EventCategory>('paid');
@@ -31,8 +46,6 @@ export default function EventModal() {
   const [revenueTarget, setRevenueTarget] = useState('');
   const [dependencies, setDependencies] = useState<string[]>([]);
   const [conflictWarning, setConflictWarning] = useState<string | null>(null);
-
-  // 校验状态
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
@@ -46,40 +59,24 @@ export default function EventModal() {
     } else {
       setTitle(''); setDescription(''); setCategory('paid'); setSubType('limited_pack');
       setPriority('P1'); setStatus('draft');
-      // B3: 从 store.defaultStartDate 获取双击传入的日期
-      setStartDate(defaultStartDate || '');
-      setEndDate(defaultStartDate || '');
+      setStartDate(defaultStartDate || ''); setEndDate(defaultStartDate || '');
       setOwner(''); setTeamRoles([]); setTags(''); setNotes(''); setRevenueTarget('');
       setDependencies([]);
     }
-    setSubmitted(false);
-    setConflictWarning(null);
+    setSubmitted(false); setConflictWarning(null);
   }, [editingEvent, isEventModalOpen, defaultStartDate]);
 
-  // 当 startDate 变化时，如果 endDate 早于 startDate，自动修正
-  useEffect(() => {
-    if (startDate && endDate && endDate < startDate) {
-      setEndDate(startDate);
-    }
-  }, [startDate]);
+  useEffect(() => { if (startDate && endDate && endDate < startDate) setEndDate(startDate); }, [startDate]);
 
-  // ESC 关闭弹窗
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') closeEventModal();
-  }, [closeEventModal]);
-
+  const handleKeyDown = useCallback((e: KeyboardEvent) => { if (e.key === 'Escape') closeEventModal(); }, [closeEventModal]);
   useEffect(() => {
-    if (isEventModalOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
+    if (isEventModalOpen) { document.addEventListener('keydown', handleKeyDown); return () => document.removeEventListener('keydown', handleKeyDown); }
   }, [isEventModalOpen, handleKeyDown]);
 
   if (!isEventModalOpen) return null;
 
   const toggleRole = (r: TeamRole) => setTeamRoles((p) => p.includes(r) ? p.filter((x) => x !== r) : [...p, r]);
 
-  // 校验逻辑
   const errors = {
     title: !title.trim() ? '请输入活动名称' : '',
     startDate: !startDate ? '请选择开始日期' : '',
@@ -90,8 +87,6 @@ export default function EventModal() {
   const handleSave = () => {
     setSubmitted(true);
     if (hasErrors) return;
-
-    // 冲突检测：检查同类型活动时间重叠
     if (startDate && endDate) {
       const overlapping = events.filter((e) => {
         if (editingEvent && e.id === editingEvent.id) return false;
@@ -104,13 +99,11 @@ export default function EventModal() {
         return;
       }
     }
-
     const data = {
       title: title.trim(), description, category, subType, priority, status, startDate, endDate,
       color: CATEGORY_COLORS[category], owner, teamRoles,
       tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
       dependencies, notes,
-      // B13: 营收目标过滤负数
       revenueTarget: revenueTarget ? Math.max(0, Number(revenueTarget)) : undefined,
       revenueActual: editingEvent?.revenueActual,
     };
@@ -118,191 +111,227 @@ export default function EventModal() {
     closeEventModal();
   };
 
-  const lbl = "text-[13px] font-medium mb-2";
-  const lblStyle = { color: 'var(--text-tertiary)' };
-  const errCls = "text-[12px] text-[#ff3b30] mt-1.5";
+  const Label = ({ text, required }: { text: string; required?: boolean }) => (
+    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8 }}>
+      {text}{required && <span style={{ color: '#ff3b30', marginLeft: 3 }}>*</span>}
+    </div>
+  );
+
+  const ErrMsg = ({ msg }: { msg: string }) => msg ? (
+    <div style={{ fontSize: 12, color: '#ff3b30', marginTop: 6 }}>{msg}</div>
+  ) : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center animate-fade-in">
-      <div className="absolute inset-0 bg-black/25" onClick={closeEventModal} />
-      <div className="relative overflow-hidden rounded-2xl animate-scale-in"
-        style={{ width: 680, maxHeight: '88vh', background: 'var(--bg-surface)', boxShadow: 'var(--shadow-modal)' }}>
+    <div className="animate-fade-in" style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.25)' }} onClick={closeEventModal} />
+      <div className="animate-scale-in" style={{
+        position: 'relative', width: 640, maxHeight: '88vh', overflow: 'hidden',
+        borderRadius: 16, background: 'var(--bg-surface)', boxShadow: '0 20px 60px rgba(0,0,0,.15)',
+        display: 'flex', flexDirection: 'column',
+      }}>
         {/* 头部 */}
-        <div className="flex items-center justify-between px-8 py-5 border-b" style={{ borderColor: 'var(--border-primary)' }}>
-          <h2 className="text-[20px]" style={{ color: 'var(--text-primary)' }}>{editingEvent ? '编辑活动' : '新建活动'}</h2>
-          <button onClick={closeEventModal} className="w-11 h-11 rounded-full flex items-center justify-center t-bg-hover transition-colors" style={{ color: 'var(--text-tertiary)' }}>
-            <X size={22} />
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0 24px', height: 56, borderBottom: '1px solid var(--border-tertiary)', flexShrink: 0,
+        }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            {editingEvent ? '编辑活动' : '新建活动'}
+          </h2>
+          <button onClick={closeEventModal} style={{
+            width: 36, height: 36, borderRadius: 10, border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'transparent', color: 'var(--text-tertiary)', transition: 'background .12s',
+          }} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
+            <X size={20} />
           </button>
         </div>
 
         {/* 表单 */}
-        <div className="px-8 py-6 space-y-6 overflow-y-auto max-h-[calc(88vh-148px)]">
-          {/* 活动名称 */}
+        <div style={{ padding: '20px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 18, flex: 1 }}>
+          {/* 名称 */}
           <div>
-            <div className={lbl} style={lblStyle}>活动名称 <span className="text-[#ff3b30]">*</span></div>
-            <input
-              className={`input text-[16px] ${submitted && errors.title ? 'border-[#ff3b30] focus:border-[#ff3b30] focus:ring-[#ff3b30]/20' : ''}`}
-              value={title} onChange={(e) => setTitle(e.target.value)}
-              placeholder="例：五一黄金周限时礼包"
-            />
-            {submitted && errors.title && <div className={errCls}>{errors.title}</div>}
+            <Label text="活动名称" required />
+            <input style={submitted && errors.title ? inputErrStyle : inputStyle} value={title} onChange={(e) => setTitle(e.target.value)}
+              placeholder="例：五一黄金周限时礼包" onFocus={inputFocus} onBlur={inputBlur} />
+            {submitted && <ErrMsg msg={errors.title} />}
           </div>
 
-          <div className="grid grid-cols-2 gap-5">
+          {/* 类型 + 子类型 */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
-              <div className={lbl} style={lblStyle}>活动类型 <span className="text-[#ff3b30]">*</span></div>
-              <select className="input" value={category} onChange={(e) => { const c = e.target.value as EventCategory; setCategory(c); setSubType(getSubTypes(c)[0]); }}>
+              <Label text="活动类型" required />
+              <select style={inputStyle} value={category} onChange={(e) => { const c = e.target.value as EventCategory; setCategory(c); setSubType(getSubTypes(c)[0]); }}
+                onFocus={inputFocus as any} onBlur={inputBlur as any}>
                 {CATEGORIES.map((c) => <option key={c} value={c}>{CATEGORY_NAMES[c]}</option>)}
               </select>
             </div>
             <div>
-              <div className={lbl} style={lblStyle}>子类型</div>
-              <select className="input" value={subType} onChange={(e) => setSubType(e.target.value as EventSubType)}>
+              <Label text="子类型" />
+              <select style={inputStyle} value={subType} onChange={(e) => setSubType(e.target.value as EventSubType)}
+                onFocus={inputFocus as any} onBlur={inputBlur as any}>
                 {getSubTypes(category).map((st) => <option key={st} value={st}>{SUBTYPE_NAMES[st]}</option>)}
               </select>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-5">
+          {/* 优先级 + 状态 */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
-              <div className={lbl} style={lblStyle}>优先级</div>
-              <select className="input" value={priority} onChange={(e) => setPriority(e.target.value as Priority)}>
+              <Label text="优先级" />
+              <select style={inputStyle} value={priority} onChange={(e) => setPriority(e.target.value as Priority)}
+                onFocus={inputFocus as any} onBlur={inputBlur as any}>
                 {PRIORITIES.map((p) => <option key={p} value={p}>{PRIORITY_CONFIG[p].name}</option>)}
               </select>
             </div>
             <div>
-              <div className={lbl} style={lblStyle}>状态</div>
-              <select className="input" value={status} onChange={(e) => setStatus(e.target.value as EventStatus)}>
+              <Label text="状态" />
+              <select style={inputStyle} value={status} onChange={(e) => setStatus(e.target.value as EventStatus)}
+                onFocus={inputFocus as any} onBlur={inputBlur as any}>
                 {STATUSES.map((s) => <option key={s} value={s}>{STATUS_CONFIG[s].name}</option>)}
               </select>
             </div>
           </div>
 
           {/* 日期 */}
-          <div className="grid grid-cols-2 gap-5">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
-              <div className={lbl} style={lblStyle}>开始日期 <span className="text-[#ff3b30]">*</span></div>
-              <input
-                type="date" className={`input ${submitted && errors.startDate ? 'border-[#ff3b30] focus:border-[#ff3b30] focus:ring-[#ff3b30]/20' : ''}`}
-                value={startDate} onChange={(e) => setStartDate(e.target.value)}
-              />
-              {submitted && errors.startDate && <div className={errCls}>{errors.startDate}</div>}
+              <Label text="开始日期" required />
+              <input type="date" style={submitted && errors.startDate ? inputErrStyle : inputStyle}
+                value={startDate} onChange={(e) => setStartDate(e.target.value)} onFocus={inputFocus} onBlur={inputBlur} />
+              {submitted && <ErrMsg msg={errors.startDate} />}
             </div>
             <div>
-              <div className={lbl} style={lblStyle}>结束日期 <span className="text-[#ff3b30]">*</span></div>
-              <input
-                type="date" className={`input ${submitted && errors.endDate ? 'border-[#ff3b30] focus:border-[#ff3b30] focus:ring-[#ff3b30]/20' : ''}`}
-                value={endDate} onChange={(e) => setEndDate(e.target.value)}
-                min={startDate || undefined}
-              />
-              {submitted && errors.endDate && <div className={errCls}>{errors.endDate}</div>}
+              <Label text="结束日期" required />
+              <input type="date" style={submitted && errors.endDate ? inputErrStyle : inputStyle}
+                value={endDate} onChange={(e) => setEndDate(e.target.value)} min={startDate || undefined} onFocus={inputFocus} onBlur={inputBlur} />
+              {submitted && <ErrMsg msg={errors.endDate} />}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-5">
+          {/* 负责人 + 营收 */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
-              <div className={lbl} style={lblStyle}>负责人</div>
-              <input className="input" value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="姓名" />
+              <Label text="负责人" />
+              <input style={inputStyle} value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="姓名" onFocus={inputFocus} onBlur={inputBlur} />
             </div>
             <div>
-              {/* B13: 营收目标限制最小值为0，不允许负数 */}
-              <div className={lbl} style={lblStyle}>营收目标</div>
-              <input type="number" min="0" step="1" className="input" value={revenueTarget}
+              <Label text="营收目标" />
+              <input type="number" min="0" step="1" style={inputStyle} value={revenueTarget}
                 onChange={(e) => setRevenueTarget(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'e' || e.key === 'E' || e.key === '-') e.preventDefault(); }}
-                placeholder="单位：元" />
+                placeholder="单位：元" onFocus={inputFocus} onBlur={inputBlur} />
             </div>
           </div>
 
+          {/* 协同角色 */}
           <div>
-            <div className={lbl} style={lblStyle}>协同角色</div>
-            <div className="flex flex-wrap gap-2">
-              {ROLES.map((r) => (
-                <button key={r} onClick={() => toggleRole(r)}
-                  className={`h-10 px-4 rounded-full text-[14px] font-medium border transition-all ${
-                    teamRoles.includes(r) ? '' : 'hover:opacity-80'
-                  }`}
-                  style={{
-                    background: teamRoles.includes(r) ? 'var(--accent-bg)' : 'var(--bg-surface)',
-                    borderColor: teamRoles.includes(r) ? 'var(--accent)' : 'var(--border-secondary)',
-                    color: teamRoles.includes(r) ? 'var(--text-active)' : 'var(--text-tertiary)',
-                  }}>
-                  {ROLE_CONFIG[r].icon} {ROLE_CONFIG[r].name}
-                </button>
-              ))}
+            <Label text="协同角色" />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {ROLES.map((r) => {
+                const active = teamRoles.includes(r);
+                return (
+                  <button key={r} onClick={() => toggleRole(r)} style={{
+                    height: 36, padding: '0 14px', borderRadius: 18, fontSize: 13, fontWeight: 500,
+                    border: `1.5px solid ${active ? 'var(--accent)' : 'var(--border-secondary)'}`,
+                    background: active ? 'var(--accent-bg)' : 'transparent',
+                    color: active ? 'var(--accent)' : 'var(--text-muted)',
+                    cursor: 'pointer', transition: 'all .12s',
+                  }}>{ROLE_CONFIG[r].icon} {ROLE_CONFIG[r].name}</button>
+                );
+              })}
             </div>
           </div>
 
+          {/* 标签 */}
           <div>
-            <div className={lbl} style={lblStyle}>标签（逗号分隔）</div>
-            <input className="input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="春节, 限时, 高营收" />
+            <Label text="标签（逗号分隔）" />
+            <input style={inputStyle} value={tags} onChange={(e) => setTags(e.target.value)} placeholder="春节, 限时, 高营收" onFocus={inputFocus} onBlur={inputBlur} />
           </div>
 
-          {/* 依赖关系选择 */}
+          {/* 依赖 */}
           <div>
-            <div className={lbl} style={lblStyle}>前置依赖活动</div>
-            <div className="flex flex-wrap gap-2 max-h-[120px] overflow-auto">
-              {events.filter((e) => !editingEvent || e.id !== editingEvent.id).map((e) => (
-                <button key={e.id} type="button"
-                  onClick={() => setDependencies((prev) => prev.includes(e.id) ? prev.filter((d) => d !== e.id) : [...prev, e.id])}
-                  className={`h-9 px-3 rounded-lg text-[13px] font-medium border transition-all truncate max-w-[200px] ${
-                    dependencies.includes(e.id) ? '' : 'hover:opacity-80'
-                  }`}
-                  style={{
-                    background: dependencies.includes(e.id) ? 'var(--accent-bg)' : 'var(--bg-surface)',
-                    borderColor: dependencies.includes(e.id) ? 'var(--accent)' : 'var(--border-secondary)',
-                    color: dependencies.includes(e.id) ? 'var(--text-active)' : 'var(--text-tertiary)',
-                  }}>
-                  {e.title}
-                </button>
-              ))}
+            <Label text="前置依赖活动" />
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 110, overflowY: 'auto' }}>
+              {events.filter((e) => !editingEvent || e.id !== editingEvent.id).map((e) => {
+                const active = dependencies.includes(e.id);
+                return (
+                  <button key={e.id} type="button"
+                    onClick={() => setDependencies((prev) => active ? prev.filter((d) => d !== e.id) : [...prev, e.id])}
+                    style={{
+                      height: 32, padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 500,
+                      border: `1.5px solid ${active ? 'var(--accent)' : 'var(--border-secondary)'}`,
+                      background: active ? 'var(--accent-bg)' : 'transparent',
+                      color: active ? 'var(--accent)' : 'var(--text-muted)',
+                      cursor: 'pointer', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      transition: 'all .12s',
+                    }}>{e.title}</button>
+                );
+              })}
               {events.filter((e) => !editingEvent || e.id !== editingEvent.id).length === 0 && (
-                <span className="text-[13px]" style={{ color: 'var(--text-placeholder)' }}>暂无其他活动可选</span>
+                <span style={{ fontSize: 13, color: 'var(--text-placeholder)' }}>暂无其他活动可选</span>
               )}
             </div>
           </div>
 
+          {/* 描述 */}
           <div>
-            <div className={lbl} style={lblStyle}>描述</div>
-            <textarea className="input h-24 resize-none" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="活动详情..." />
+            <Label text="描述" />
+            <textarea style={{ ...inputStyle, height: 80, padding: '10px 14px', resize: 'none' }} value={description}
+              onChange={(e) => setDescription(e.target.value)} placeholder="活动详情..."
+              onFocus={inputFocus as any} onBlur={inputBlur as any} />
           </div>
 
+          {/* 备注 */}
           <div>
-            <div className={lbl} style={lblStyle}>备注</div>
-            <textarea className="input h-20 resize-none" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="内部备注..." />
+            <Label text="备注" />
+            <textarea style={{ ...inputStyle, height: 68, padding: '10px 14px', resize: 'none' }} value={notes}
+              onChange={(e) => setNotes(e.target.value)} placeholder="内部备注..."
+              onFocus={inputFocus as any} onBlur={inputBlur as any} />
           </div>
         </div>
 
         {/* 冲突警告 */}
         {conflictWarning && (
-          <div className="mx-8 mb-2 p-4 rounded-xl flex items-center gap-3 animate-fade-in"
-            style={{ background: 'color-mix(in srgb, #ff3b30 8%, var(--bg-surface))', border: '1px solid color-mix(in srgb, #ff3b30 15%, transparent)' }}>
-            <span className="text-[13px] font-medium flex-1" style={{ color: '#ff3b30' }}>{conflictWarning}</span>
-            <button onClick={() => { setConflictWarning('confirmed'); handleSave(); }}
-              className="h-9 px-4 rounded-lg text-[13px] font-semibold flex-shrink-0"
-              style={{ background: '#ff3b30', color: '#fff' }}>仍然创建</button>
-            <button onClick={() => setConflictWarning(null)}
-              className="h-9 px-3 rounded-lg text-[13px] font-medium flex-shrink-0"
-              style={{ color: 'var(--text-muted)' }}>取消</button>
+          <div style={{
+            margin: '0 24px 12px', padding: '12px 16px', borderRadius: 10,
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: 'color-mix(in srgb, #ff3b30 8%, var(--bg-surface))',
+            border: '1px solid color-mix(in srgb, #ff3b30 15%, transparent)',
+          }}>
+            <span style={{ fontSize: 13, fontWeight: 500, flex: 1, color: '#ff3b30' }}>{conflictWarning}</span>
+            <button onClick={() => { setConflictWarning('confirmed'); handleSave(); }} style={{
+              height: 32, padding: '0 14px', borderRadius: 8, fontSize: 13, fontWeight: 700,
+              background: '#ff3b30', color: '#fff', border: 'none', cursor: 'pointer', flexShrink: 0,
+            }}>仍然创建</button>
+            <button onClick={() => setConflictWarning(null)} style={{
+              height: 32, padding: '0 10px', borderRadius: 8, fontSize: 13, fontWeight: 500,
+              background: 'transparent', color: 'var(--text-muted)', border: 'none', cursor: 'pointer', flexShrink: 0,
+            }}>取消</button>
           </div>
         )}
 
         {/* 底部 */}
-        <div className="flex items-center justify-between px-8 py-5 border-t" style={{ borderColor: 'var(--border-primary)' }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '14px 24px', borderTop: '1px solid var(--border-tertiary)', flexShrink: 0,
+        }}>
           {submitted && hasErrors ? (
-            <span className="text-[13px] text-[#ff3b30]">请填写所有必填字段</span>
-          ) : (
-            <span />
-          )}
-          <div className="flex items-center gap-3">
-            <button onClick={closeEventModal}
-              className="h-11 px-6 rounded-full text-[14px] font-medium transition-colors" style={{ color: 'var(--accent)' }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent-bg)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-              取消
-            </button>
-            <button onClick={handleSave}
-              className="btn-primary h-11 px-7">
+            <span style={{ fontSize: 13, color: '#ff3b30' }}>请填写所有必填字段</span>
+          ) : <span />}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button onClick={closeEventModal} style={{
+              height: 40, padding: '0 20px', borderRadius: 20, fontSize: 14, fontWeight: 500,
+              background: 'transparent', color: 'var(--accent)', border: 'none', cursor: 'pointer',
+              transition: 'background .12s',
+            }} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--accent-bg)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>取消</button>
+            <button onClick={handleSave} style={{
+              height: 40, padding: '0 24px', borderRadius: 20, fontSize: 14, fontWeight: 600,
+              background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(59,130,246,.25)', transition: 'transform .1s, box-shadow .15s',
+            }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(59,130,246,.35)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(59,130,246,.25)'; }}>
               {editingEvent ? '保存修改' : '创建活动'}
             </button>
           </div>

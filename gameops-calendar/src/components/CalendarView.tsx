@@ -33,23 +33,9 @@ export default function CalendarView() {
     openEventModal();
   }, [setDefaultStartDate, openEventModal]);
 
-  if (events.length === 0) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: 'var(--bg-primary)' }}>
-        <div style={{ textAlign: 'center', maxWidth: 320 }}>
-          <div style={{ width: 80, height: 80, margin: '0 auto 24px', borderRadius: 16, background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--text-placeholder)" strokeWidth="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          </div>
-          <div style={{ fontSize: 17, fontWeight: 500, marginBottom: 12, color: 'var(--text-secondary)' }}>没有匹配的活动</div>
-          <div style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--text-tertiary)' }}>尝试调整筛选条件，或按 N 新建活动</div>
-        </div>
-      </div>
-    );
-  }
-
   if (calendarView === 'month') return <MonthView currentDate={currentDate} events={events} allEvents={storeEvents} holidays={holidays} openDetailPanel={openDetailPanel} onDoubleClick={handleDoubleClickDate} moveEvent={moveEvent} />;
   if (calendarView === 'week') return <WeekView currentDate={currentDate} events={events} holidays={holidays} openDetailPanel={openDetailPanel} onDoubleClick={handleDoubleClickDate} />;
-  return <DayView currentDate={currentDate} events={events} holidays={holidays} openDetailPanel={openDetailPanel} />;
+  return <DayView currentDate={currentDate} events={events} holidays={holidays} openDetailPanel={openDetailPanel} onDoubleClick={handleDoubleClickDate} />;
 }
 
 function eventsForDay(events: GameEvent[], day: Date) {
@@ -497,9 +483,9 @@ function WeekView({ currentDate, events, holidays, openDetailPanel, onDoubleClic
 }
 
 /* ============ 日视图 ============ */
-function DayView({ currentDate, events, holidays, openDetailPanel }: {
+function DayView({ currentDate, events, holidays, openDetailPanel, onDoubleClick }: {
   currentDate: Date; events: GameEvent[]; holidays: Holiday[];
-  openDetailPanel: (id: string) => void;
+  openDetailPanel: (id: string) => void; onDoubleClick: (day: Date) => void;
 }) {
   const de = eventsForDay(events, currentDate);
   const dh = holidaysForDay(holidays, currentDate);
@@ -517,9 +503,12 @@ function DayView({ currentDate, events, holidays, openDetailPanel }: {
           <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-tertiary)' }}>当日活动 · {de.length}</span>
         </div>
       </div>
-      {de.length > 0 && (
-        <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border-tertiary)', background: 'var(--bg-secondary)' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: 12 }}>全天活动</div>
+
+      {/* 全天活动列表 */}
+      <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border-tertiary)', background: 'var(--bg-secondary)' }}
+        onDoubleClick={() => onDoubleClick(currentDate)}>
+        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: 12 }}>全天活动</div>
+        {de.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {de.map((evt) => {
               const c = CATEGORY_COLORS[evt.category];
@@ -539,8 +528,12 @@ function DayView({ currentDate, events, holidays, openDetailPanel }: {
               );
             })}
           </div>
-        </div>
-      )}
+        ) : (
+          <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-placeholder)', fontSize: 13 }}>暂无活动，双击此处创建</div>
+        )}
+      </div>
+
+      {/* 时间轴（仅显示网格，不再放置虚假事件定位） */}
       <div style={{ position: 'relative', paddingLeft: 80 }}>
         {hours.map((hour) => (
           <div key={hour.toISOString()} style={{ display: 'flex', height: hourH, borderBottom: '1px solid var(--border-tertiary)' }}>
@@ -548,20 +541,6 @@ function DayView({ currentDate, events, holidays, openDetailPanel }: {
             <div style={{ flex: 1, borderLeft: '1px solid var(--border-tertiary)' }} />
           </div>
         ))}
-        {de.map((evt, idx) => {
-          const c = CATEGORY_COLORS[evt.category];
-          const sh = 9 + (idx % 4) * 2; const top = sh * hourH; const h = 2 * hourH;
-          return (
-            <div key={evt.id} style={{ position: 'absolute', top, height: h, left: `calc(${(idx % 3) * 33}% + 8px)`, width: `calc(${Math.min(33, 100 - (idx % 3) * 33)}% - 16px)`, borderRadius: 8, background: `${c}12`, borderLeft: `3px solid ${c}`, minWidth: 120, cursor: 'pointer', overflow: 'hidden', transition: 'filter .12s' }}
-              onClick={() => openDetailPanel(evt.id)} role="button" tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter') openDetailPanel(evt.id); }}>
-              <div style={{ padding: 12 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{evt.title}</div>
-                <div style={{ fontSize: 12, fontWeight: 500, marginTop: 4, color: 'var(--text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{evt.owner}</div>
-              </div>
-            </div>
-          );
-        })}
         {isToday(currentDate) && (() => {
           const now = new Date(); const ch = now.getHours() + now.getMinutes() / 60;
           return (

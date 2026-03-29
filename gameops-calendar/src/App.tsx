@@ -42,7 +42,7 @@ export default function App() {
     const tag = (e.target as HTMLElement).tagName;
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return;
     const anyModalOpen = isEventModalOpen || isTemplateModalOpen || isExportModalOpen || isDetailPanelOpen || showHelp;
-    if (e.key === '?' || (e.key === '/' && e.shiftKey)) { e.preventDefault(); setShowHelp((v) => !v); return; }
+    if (e.key === '?' || (e.key === '/' && e.shiftKey)) { if (!anyModalOpen || showHelp) { e.preventDefault(); setShowHelp((v) => !v); } return; }
     if (anyModalOpen) return;
     switch (e.key) {
       case 'n': case 'N': e.preventDefault(); openEventModal(); break;
@@ -60,7 +60,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
-      <Sidebar expanded={sidebarExpanded} onToggle={() => setSidebarExpanded(!sidebarExpanded)} darkMode={darkMode} onToggleDark={toggleDark} />
+      <Sidebar expanded={sidebarExpanded} onToggle={() => setSidebarExpanded(!sidebarExpanded)} darkMode={darkMode} onToggleDark={toggleDark} onShowHelp={() => setShowHelp(true)} />
       <div className="flex-1 flex flex-col min-w-0 transition-all duration-200">
         <TopBar viewLabel={VIEW_LABELS[currentView]} />
         <div className="flex-1 min-h-0 relative">

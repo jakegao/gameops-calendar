@@ -24,19 +24,7 @@ export default function BoardView() {
   }));
   const visibleColumns = showEmpty ? allColumns : allColumns.filter((c) => c.events.length > 0);
 
-  if (events.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-full" style={{ background: 'var(--bg-secondary)' }}>
-        <div className="text-center" style={{ maxWidth: 320 }}>
-          <div style={{ width: 80, height: 80, margin: '0 auto 24px', borderRadius: 16, background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--text-placeholder)" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-          </div>
-          <div style={{ fontSize: 17, fontWeight: 500, marginBottom: 12, color: 'var(--text-secondary)' }}>没有匹配的活动</div>
-          <div style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--text-tertiary)' }}>尝试调整筛选条件，或按 N 新建活动</div>
-        </div>
-      </div>
-    );
-  }
+  /* 空状态不再拦截渲染，保留列结构骨架 */
 
   return (
     <div style={{ height: '100%', overflowX: 'auto', position: 'relative', background: 'var(--bg-secondary)' }}>

@@ -109,19 +109,7 @@ export default function GanttView() {
     if (containerRef.current && leftPanelRef.current) leftPanelRef.current.scrollTop = containerRef.current.scrollTop - headerHeight;
   }, []);
 
-  if (sortedEvents.length === 0) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: 'var(--bg-primary)' }}>
-        <div style={{ textAlign: 'center', maxWidth: 320 }}>
-          <div style={{ width: 80, height: 80, margin: '0 auto 24px', borderRadius: 16, background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--text-placeholder)" strokeWidth="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          </div>
-          <div style={{ fontSize: 17, fontWeight: 500, marginBottom: 12, color: 'var(--text-secondary)' }}>没有匹配的活动</div>
-          <div style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--text-tertiary)' }}>尝试调整筛选条件，或按 N 新建活动</div>
-        </div>
-      </div>
-    );
-  }
+  /* 空状态不再拦截渲染，保留时间轴骨架 */
 
   return (
     <div style={{ display: 'flex', height: '100%', background: 'var(--bg-primary)' }}>

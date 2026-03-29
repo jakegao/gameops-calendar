@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 import {
   Calendar, BarChart3, LayoutGrid, Menu,
-  Sparkles, ArrowLeftRight, Settings, HelpCircle, Moon, Sun, BarChart2, GanttChart,
+  Sparkles, ArrowLeftRight, HelpCircle, Moon, Sun, BarChart2, GanttChart,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore.ts';
 
-interface Props { expanded: boolean; onToggle: () => void; darkMode: boolean; onToggleDark: () => void }
+interface Props { expanded: boolean; onToggle: () => void; darkMode: boolean; onToggleDark: () => void; onShowHelp?: () => void }
 
-export default function Sidebar({ expanded, onToggle, darkMode, onToggleDark }: Props) {
+export default function Sidebar({ expanded, onToggle, darkMode, onToggleDark, onShowHelp }: Props) {
   const { currentView, setCurrentView, openTemplateModal, openExportModal } = useAppStore();
 
   /* ---- 导航项（对齐截图中的6项） ---- */
@@ -178,7 +178,7 @@ export default function Sidebar({ expanded, onToggle, darkMode, onToggleDark }: 
           <Tip text="导出 / 导入" />
         </div>
 
-        {/* Settings（主题切换映射为 Settings） */}
+        {/* 主题切换 */}
         <div style={{ position: 'relative' }} className="group">
           <button onClick={onToggleDark} style={{
             width: '100%', display: 'flex', alignItems: 'center',
@@ -191,15 +191,15 @@ export default function Sidebar({ expanded, onToggle, darkMode, onToggleDark }: 
             onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
           >
-            {darkMode ? <Sun size={19} strokeWidth={1.6} /> : <Settings size={19} strokeWidth={1.6} />}
-            {expanded && <span>{darkMode ? '浅色主题' : '设置'}</span>}
+            {darkMode ? <Sun size={19} strokeWidth={1.6} /> : <Moon size={19} strokeWidth={1.6} />}
+            {expanded && <span>{darkMode ? '浅色主题' : '深色主题'}</span>}
           </button>
-          <Tip text={darkMode ? '浅色主题' : '设置'} />
+          <Tip text={darkMode ? '浅色主题' : '深色主题'} />
         </div>
 
-        {/* Support（帮助/支持） */}
+        {/* 帮助支持 */}
         <div style={{ position: 'relative' }} className="group">
-          <button onClick={() => {}} style={{
+          <button onClick={() => onShowHelp?.()} style={{
             width: '100%', display: 'flex', alignItems: 'center',
             gap: 14, height: 44, borderRadius: 10, border: 'none', cursor: 'pointer',
             padding: expanded ? '0 16px' : '0',

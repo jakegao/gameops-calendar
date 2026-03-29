@@ -7,33 +7,40 @@ export default function Snackbar() {
   const undoDelete = useAppStore((s) => s.undoDelete);
   const dismissSnackbar = useAppStore((s) => s.dismissSnackbar);
 
-  // 5秒后自动消失
   useEffect(() => {
-    if (snackbar) {
-      const timer = setTimeout(dismissSnackbar, 5000);
-      return () => clearTimeout(timer);
-    }
+    if (snackbar) { const timer = setTimeout(dismissSnackbar, 5000); return () => clearTimeout(timer); }
   }, [snackbar, dismissSnackbar]);
 
   if (!snackbar) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] animate-fade-in">
-      <div className="flex items-center gap-4 px-6 py-4 rounded-xl min-w-[360px]"
-        style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)', boxShadow: '0 4px 16px rgba(0,0,0,.25)' }}>
-        <span className="text-[14px] flex-1">{snackbar.message}</span>
+    <div className="animate-fade-in" style={{
+      position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100,
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px',
+        borderRadius: 14, minWidth: 340,
+        background: 'var(--text-primary)', color: 'var(--bg-primary)',
+        boxShadow: '0 8px 24px rgba(0,0,0,.25)',
+      }}>
+        <span style={{ fontSize: 14, flex: 1 }}>{snackbar.message}</span>
         {snackbar.undoEntry && (
-          <button onClick={undoDelete}
-            className="flex items-center gap-2 h-11 px-4 rounded-xl text-[14px] font-medium transition-colors"
-            style={{ color: 'var(--accent)' }}>
-            <Undo2 size={16} />
-            撤销
+          <button onClick={undoDelete} style={{
+            display: 'flex', alignItems: 'center', gap: 6, height: 36, padding: '0 14px',
+            borderRadius: 10, fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer',
+            background: 'transparent', color: 'var(--accent)', transition: 'background .12s',
+          }} onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
+            <Undo2 size={15} /> 撤销
           </button>
         )}
-        <button onClick={dismissSnackbar} className="w-11 h-11 rounded-xl flex items-center justify-center transition-colors" style={{ color: 'var(--text-muted)' }}
-          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--bg-primary)'}
-          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}>
-          <X size={18} />
+        <button onClick={dismissSnackbar} style={{
+          width: 36, height: 36, borderRadius: 10, border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'transparent', color: 'rgba(255,255,255,.5)', transition: 'color .12s',
+        }} onMouseEnter={(e) => { e.currentTarget.style.color = '#fff'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,.5)'; }}>
+          <X size={17} />
         </button>
       </div>
     </div>
