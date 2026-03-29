@@ -32,7 +32,7 @@ export default function HelpModal({ onClose }: Props) {
             <Keyboard size={22} style={{ color: 'var(--accent)' }} />
             <h2 className="text-[20px]" style={{ color: 'var(--text-primary)' }}>键盘快捷键</h2>
           </div>
-          <button onClick={onClose} className="w-10 h-10 rounded-full flex items-center justify-center t-bg-hover transition-colors" style={{ color: 'var(--text-tertiary)' }}>
+          <button onClick={onClose} className="w-11 h-11 rounded-full flex items-center justify-center t-bg-hover transition-colors" style={{ color: 'var(--text-tertiary)' }}>
             <X size={22} />
           </button>
         </div>

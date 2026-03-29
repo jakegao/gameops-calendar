@@ -30,34 +30,34 @@ export default function TemplateModal() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center animate-fade-in">
       <div className="absolute inset-0 bg-black/25" onClick={closeTemplateModal} />
-      <div className="relative w-[640px] max-h-[85vh] overflow-hidden flex flex-col rounded-2xl animate-scale-in"
-        style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-modal)' }}>
+      <div className="relative max-h-[85vh] overflow-hidden flex flex-col rounded-2xl animate-scale-in"
+        style={{ width: 640, background: 'var(--bg-surface)', boxShadow: 'var(--shadow-modal)' }}>
         <div className="flex items-center justify-between px-8 py-5 border-b" style={{ borderColor: 'var(--border-primary)' }}>
           <div className="flex items-center gap-3">
             <Sparkles size={22} style={{ color: 'var(--accent)' }} />
             <h2 className="text-[20px]" style={{ color: 'var(--text-primary)' }}>从模板创建</h2>
           </div>
-          <button onClick={closeTemplateModal} className="w-10 h-10 rounded-full flex items-center justify-center t-bg-hover transition-colors" style={{ color: 'var(--text-tertiary)' }}>
+          <button onClick={closeTemplateModal} className="w-11 h-11 rounded-full flex items-center justify-center t-bg-hover transition-colors" style={{ color: 'var(--text-tertiary)' }}>
             <X size={22} />
           </button>
         </div>
 
         <div className="px-8 py-4 border-b flex gap-2 flex-wrap" style={{ borderColor: 'var(--border-primary)' }}>
           <button onClick={() => setFilterCat('')}
-            className="h-9 px-4 rounded-full text-[14px] font-medium transition-all"
+            className="h-10 px-5 rounded-full text-[14px] font-medium transition-all"
             style={{ background: !filterCat ? 'var(--accent)' : 'var(--bg-tertiary)', color: !filterCat ? '#fff' : 'var(--text-tertiary)' }}>
             全部
           </button>
           {CATEGORIES.map((c) => (
             <button key={c} onClick={() => setFilterCat(c)}
-              className="h-9 px-4 rounded-full text-[14px] font-medium transition-all"
+              className="h-10 px-5 rounded-full text-[14px] font-medium transition-all"
               style={{ backgroundColor: filterCat === c ? CATEGORY_COLORS[c] : 'var(--bg-tertiary)', color: filterCat === c ? '#fff' : 'var(--text-tertiary)' }}>
               {CATEGORY_NAMES[c]}
             </button>
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-8 py-5">
+        <div className="flex-1 overflow-y-auto px-8 py-6">
           <div className="grid grid-cols-2 gap-4">
             {filtered.map((tpl) => (
               <button key={tpl.id} onClick={() => setSelectedTplId(tpl.id)}

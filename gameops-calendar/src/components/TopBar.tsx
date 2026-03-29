@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, Filter, Layers, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Search, Filter, Layers, ChevronLeft, ChevronRight, Diamond, X } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore.ts';
 import { format, addMonths, subMonths, addWeeks, subWeeks, addDays, subDays } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
@@ -18,10 +18,8 @@ export default function TopBar({ viewLabel }: Props) {
 
   const [showLayerDropdown, setShowLayerDropdown] = useState(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
   const layerRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -32,8 +30,7 @@ export default function TopBar({ viewLabel }: Props) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  useEffect(() => { if (showSearch && searchRef.current) searchRef.current.focus(); }, [showSearch]);
-
+  /* ---- 导航 ---- */
   const navigatePrev = () => {
     if (currentView === 'calendar') {
       if (calendarView === 'month') setCurrentDate(subMonths(currentDate, 1));
@@ -60,135 +57,278 @@ export default function TopBar({ viewLabel }: Props) {
     setFilterCategories(filterCategories.includes(cat) ? filterCategories.filter((c) => c !== cat) : [...filterCategories, cat]);
   };
 
-  const iconBtn = "w-10 h-10 rounded-full flex items-center justify-center t-bg-hover transition-colors";
+  const activeFilterCount = filterCategories.length + (filterRole ? 1 : 0);
 
   return (
-    <div className="h-16 flex items-center px-5 gap-3 border-b flex-shrink-0"
-      style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-primary)' }}>
+    <div style={{
+      height: 60, display: 'flex', alignItems: 'center',
+      padding: '0 24px', gap: 12, flexShrink: 0,
+      background: 'var(--bg-surface)',
+      borderBottom: '1px solid var(--border-primary)',
+    }}>
 
-      {/* V2-1: 视图标签 */}
-      <span className="text-[13px] font-medium px-3 py-1.5 rounded-full mr-1"
-        style={{ background: 'var(--accent-bg)', color: 'var(--accent)' }}>{viewLabel}</span>
+      {/* ====== 左侧：搜索框（常驻pill形） ====== */}
+      <div style={{ position: 'relative', flexShrink: 0 }}>
+        <Search size={16} style={{
+          position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)',
+          color: 'var(--text-placeholder)',
+        }} />
+        <input
+          type="text" placeholder="搜索活动内容..."
+          value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+          style={{
+            width: 260, height: 40, borderRadius: 20,
+            paddingLeft: 40, paddingRight: searchQuery ? 36 : 16,
+            fontSize: 14, border: '1px solid var(--border-secondary)',
+            background: 'var(--bg-tertiary)', color: 'var(--text-secondary)',
+            outline: 'none', transition: 'border-color .15s, box-shadow .15s',
+          }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.boxShadow = '0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent)'; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border-secondary)'; e.currentTarget.style.boxShadow = 'none'; }}
+        />
+        {searchQuery && (
+          <button onClick={() => setSearchQuery('')} style={{
+            position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+            width: 22, height: 22, borderRadius: '50%', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'var(--bg-hover)', color: 'var(--text-tertiary)',
+          }}>
+            <X size={13} />
+          </button>
+        )}
+      </div>
 
-      {/* 今天 + 前后翻页 */}
-      <button onClick={goToday}
-        className="px-5 h-10 rounded-lg border text-[14px] font-medium t-bg-hover transition-colors"
-        style={{ borderColor: 'var(--border-secondary)', color: 'var(--text-secondary)' }}>
-        今天
-      </button>
-      <button onClick={navigatePrev} className={iconBtn} style={{ color: 'var(--text-tertiary)' }}><ChevronLeft size={22} /></button>
-      <button onClick={navigateNext} className={iconBtn} style={{ color: 'var(--text-tertiary)' }}><ChevronRight size={22} /></button>
+      {/* ====== 中间：日期导航（居中） ====== */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+        {/* 左箭头 */}
+        <button onClick={navigatePrev} style={{
+          width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'transparent', color: 'var(--text-tertiary)',
+          transition: 'background .12s',
+        }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+        >
+          <ChevronLeft size={20} />
+        </button>
 
-      <h1 className="text-[22px] font-normal ml-2 mr-4 select-none" style={{ color: 'var(--text-secondary)' }}>{dateLabel()}</h1>
+        {/* 日期文字 */}
+        <span style={{
+          fontSize: 15, fontWeight: 600, color: 'var(--text-primary)',
+          letterSpacing: '-0.01em', userSelect: 'none', padding: '0 4px',
+        }}>{dateLabel()}</span>
 
-      {/* 日历子视图 */}
-      {currentView === 'calendar' && (
-        <div className="flex border rounded-lg overflow-hidden" style={{ borderColor: 'var(--border-secondary)' }}>
-          {(['month', 'week', 'day'] as const).map((v, i) => (
-            <button key={v} onClick={() => setCalendarView(v)}
-              className={`px-4 h-9 text-[14px] font-medium transition-colors ${i > 0 ? 'border-l' : ''}`}
-              style={{
-                borderColor: 'var(--border-secondary)',
+        {/* Today 按钮 */}
+        <button onClick={goToday} style={{
+          height: 30, padding: '0 12px', borderRadius: 6, border: 'none', cursor: 'pointer',
+          background: 'transparent', color: 'var(--accent)',
+          fontSize: 14, fontWeight: 600, transition: 'background .12s',
+        }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'color-mix(in srgb, var(--accent) 8%, transparent)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+        >Today</button>
+
+        {/* 右箭头 */}
+        <button onClick={navigateNext} style={{
+          width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'transparent', color: 'var(--text-tertiary)',
+          transition: 'background .12s',
+        }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+        >
+          <ChevronRight size={20} />
+        </button>
+
+        {/* 日历子视图切换（仅日历视图显示，紧跟在日期导航后） */}
+        {currentView === 'calendar' && (
+          <div style={{
+            display: 'flex', marginLeft: 8, borderRadius: 8, overflow: 'hidden',
+            border: '1px solid var(--border-secondary)',
+          }}>
+            {(['month', 'week', 'day'] as const).map((v, i) => (
+              <button key={v} onClick={() => setCalendarView(v)} style={{
+                height: 32, padding: '0 16px', fontSize: 13, fontWeight: 500,
+                border: 'none', cursor: 'pointer',
+                borderLeft: i > 0 ? '1px solid var(--border-secondary)' : 'none',
                 background: calendarView === v ? 'var(--bg-active)' : 'transparent',
                 color: calendarView === v ? 'var(--text-active)' : 'var(--text-tertiary)',
-              }}>
-              {{ month: '月', week: '周', day: '日' }[v]}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div className="flex-1" />
-
-      {/* 搜索 */}
-      {showSearch ? (
-        <div className="relative animate-fade-in">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-tertiary)' }} />
-          <input ref={searchRef} type="text" placeholder="搜索活动..." value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onBlur={(e) => { if (!searchQuery && !e.currentTarget.value) setTimeout(() => setShowSearch(false), 150); }}
-            className="w-72 pl-11 pr-10 h-11 rounded-lg text-[14px] focus:outline-none transition-all"
-            style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }} />
-          <button onClick={() => { setSearchQuery(''); setShowSearch(false); }}
-            className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-tertiary)' }}><X size={18} /></button>
-        </div>
-      ) : (
-        <button onClick={() => setShowSearch(true)} className={iconBtn} style={{ color: 'var(--text-tertiary)' }}><Search size={20} /></button>
-      )}
-
-      {/* 图层 */}
-      <div className="relative" ref={layerRef}>
-        <button onClick={() => { setShowLayerDropdown(!showLayerDropdown); setShowFilterDropdown(false); }} className={iconBtn} style={{ color: 'var(--text-tertiary)' }}>
-          <Layers size={20} />
-        </button>
-        {showLayerDropdown && (
-          <div className="dropdown-menu absolute right-0 top-full mt-2 w-56 py-2 z-50">
-            <div className="px-4 py-2 text-[11px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-tertiary)' }}>显示图层</div>
-            {(Object.keys(LAYER_CONFIG) as LayerType[]).map((layer) => (
-              <button key={layer} onClick={() => toggleLayer(layer)}
-                className="flex items-center gap-3 w-full px-4 py-3 text-[14px] t-bg-hover transition-colors">
-                <div className={`w-[18px] h-[18px] rounded flex items-center justify-center border-2 transition-all`}
-                  style={{ borderColor: visibleLayers[layer] ? 'var(--accent)' : 'var(--border-secondary)', background: visibleLayers[layer] ? 'var(--accent)' : 'transparent' }}>
-                  {visibleLayers[layer] && <span className="text-white text-[11px]">✓</span>}
-                </div>
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: LAYER_CONFIG[layer].color }} />
-                <span style={{ color: 'var(--text-secondary)' }}>{LAYER_CONFIG[layer].name}</span>
+                transition: 'background .12s, color .12s',
+              }}
+                onMouseEnter={(e) => { if (calendarView !== v) e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                onMouseLeave={(e) => { if (calendarView !== v) e.currentTarget.style.background = 'transparent'; }}
+              >
+                {{ month: '月', week: '周', day: '日' }[v]}
               </button>
             ))}
           </div>
         )}
       </div>
 
-      {/* 筛选 */}
-      <div className="relative" ref={filterRef}>
-        <button onClick={() => { setShowFilterDropdown(!showFilterDropdown); setShowLayerDropdown(false); }}
-          className={`${iconBtn} relative`} style={{ color: 'var(--text-tertiary)' }}>
-          <Filter size={20} />
-          {(filterCategories.length > 0 || filterRole) && (
-            <span className="absolute top-1 right-1 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center" style={{ background: 'var(--accent)', color: '#fff' }}>
-              {filterCategories.length + (filterRole ? 1 : 0)}
-            </span>
-          )}
-        </button>
-        {showFilterDropdown && (
-          <div className="dropdown-menu absolute right-0 top-full mt-2 w-64 py-2 z-50 max-h-[70vh] overflow-auto">
-            <div className="px-4 py-2 text-[11px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-tertiary)' }}>活动类型</div>
-            {(Object.keys(CATEGORY_NAMES) as EventCategory[]).map((cat) => (
-              <button key={cat} onClick={() => toggleCategoryFilter(cat)}
-                className="flex items-center gap-3 w-full px-4 py-3 text-[14px] t-bg-hover transition-colors">
-                <div className="w-[18px] h-[18px] rounded flex items-center justify-center border-2 transition-all"
-                  style={{ borderColor: filterCategories.includes(cat) ? 'var(--accent)' : 'var(--border-secondary)', background: filterCategories.includes(cat) ? 'var(--accent)' : 'transparent' }}>
-                  {filterCategories.includes(cat) && <span className="text-white text-[11px]">✓</span>}
-                </div>
-                <span style={{ color: 'var(--text-secondary)' }}>{CATEGORY_NAMES[cat]}</span>
-              </button>
-            ))}
-            <div className="border-t my-2" style={{ borderColor: 'var(--border-primary)' }} />
-            <div className="px-4 py-2 text-[11px] uppercase tracking-wider font-medium" style={{ color: 'var(--text-tertiary)' }}>角色视图</div>
-            <button onClick={() => setFilterRole(null)}
-              className="w-full px-4 py-3 text-[14px] text-left t-bg-hover"
-              style={{ color: !filterRole ? 'var(--accent)' : 'var(--text-secondary)', fontWeight: !filterRole ? 500 : 400 }}>
-              全部角色
-            </button>
-            {(Object.keys(ROLE_CONFIG) as TeamRole[]).map((role) => (
-              <button key={role} onClick={() => setFilterRole(role === filterRole ? null : role)}
-                className="flex items-center gap-3 w-full px-4 py-3 text-[14px] t-bg-hover"
-                style={{ color: filterRole === role ? 'var(--accent)' : 'var(--text-secondary)', fontWeight: filterRole === role ? 500 : 400 }}>
-                <span className="text-[18px]">{ROLE_CONFIG[role].icon}</span>
-                <span>{ROLE_CONFIG[role].name}</span>
-              </button>
-            ))}
-            {(filterCategories.length > 0 || filterRole) && (
-              <>
-                <div className="border-t my-2" style={{ borderColor: 'var(--border-primary)' }} />
-                <button onClick={() => { setFilterCategories([]); setFilterRole(null); }}
-                  className="w-full px-4 py-3 text-[14px] text-[#c5221f] text-left font-medium t-bg-hover">
-                  清除筛选
-                </button>
-              </>
+      {/* ====== 右侧：Filter + View Layers ====== */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+
+        {/* Filter 按钮（pill边框样式） */}
+        <div style={{ position: 'relative' }} ref={filterRef}>
+          <button
+            onClick={() => { setShowFilterDropdown(!showFilterDropdown); setShowLayerDropdown(false); }}
+            style={{
+              height: 40, padding: '0 18px', borderRadius: 20,
+              border: '1px solid var(--border-secondary)',
+              background: activeFilterCount > 0 ? 'color-mix(in srgb, var(--accent) 6%, var(--bg-surface))' : 'var(--bg-surface)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+              fontSize: 14, fontWeight: 500,
+              color: activeFilterCount > 0 ? 'var(--accent)' : 'var(--text-secondary)',
+              transition: 'border-color .12s, background .12s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--text-tertiary)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-secondary)'; }}
+          >
+            <Filter size={15} />
+            <span>Filter</span>
+            {activeFilterCount > 0 && (
+              <span style={{
+                width: 20, height: 20, borderRadius: '50%',
+                background: 'var(--accent)', color: '#fff',
+                fontSize: 11, fontWeight: 700,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>{activeFilterCount}</span>
             )}
-          </div>
-        )}
+          </button>
+
+          {/* Filter 下拉 */}
+          {showFilterDropdown && (
+            <div style={{
+              position: 'absolute', right: 0, top: '100%', marginTop: 8,
+              width: 260, borderRadius: 14, padding: '8px 0',
+              background: 'var(--bg-surface)', border: '1px solid var(--border-primary)',
+              boxShadow: '0 8px 32px rgba(0,0,0,.12)', zIndex: 50,
+              maxHeight: '70vh', overflowY: 'auto',
+            }}>
+              <div style={{ padding: '8px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)' }}>活动类型</div>
+              {(Object.keys(CATEGORY_NAMES) as EventCategory[]).map((cat) => (
+                <button key={cat} onClick={() => toggleCategoryFilter(cat)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '10px 16px', fontSize: 14, border: 'none', cursor: 'pointer',
+                    background: 'transparent', color: 'var(--text-secondary)', transition: 'background .1s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <div style={{
+                    width: 18, height: 18, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: `2px solid ${filterCategories.includes(cat) ? 'var(--accent)' : 'var(--border-secondary)'}`,
+                    background: filterCategories.includes(cat) ? 'var(--accent)' : 'transparent',
+                    transition: 'all .12s',
+                  }}>
+                    {filterCategories.includes(cat) && <span style={{ color: '#fff', fontSize: 11 }}>✓</span>}
+                  </div>
+                  <span>{CATEGORY_NAMES[cat]}</span>
+                </button>
+              ))}
+              <div style={{ borderTop: '1px solid var(--border-primary)', margin: '6px 0' }} />
+              <div style={{ padding: '8px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)' }}>角色视图</div>
+              <button onClick={() => setFilterRole(null)}
+                style={{
+                  width: '100%', textAlign: 'left', padding: '10px 16px', fontSize: 14,
+                  border: 'none', cursor: 'pointer', background: 'transparent',
+                  color: !filterRole ? 'var(--accent)' : 'var(--text-secondary)',
+                  fontWeight: !filterRole ? 600 : 400, transition: 'background .1s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              >全部角色</button>
+              {(Object.keys(ROLE_CONFIG) as TeamRole[]).map((role) => (
+                <button key={role} onClick={() => setFilterRole(role === filterRole ? null : role)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 16px', fontSize: 14, border: 'none', cursor: 'pointer',
+                    background: 'transparent',
+                    color: filterRole === role ? 'var(--accent)' : 'var(--text-secondary)',
+                    fontWeight: filterRole === role ? 600 : 400, transition: 'background .1s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <span style={{ fontSize: 18 }}>{ROLE_CONFIG[role].icon}</span>
+                  <span>{ROLE_CONFIG[role].name}</span>
+                </button>
+              ))}
+              {activeFilterCount > 0 && (
+                <>
+                  <div style={{ borderTop: '1px solid var(--border-primary)', margin: '6px 0' }} />
+                  <button onClick={() => { setFilterCategories([]); setFilterRole(null); }}
+                    style={{
+                      width: '100%', textAlign: 'left', padding: '10px 16px', fontSize: 14,
+                      fontWeight: 600, color: '#ff3b30', border: 'none', cursor: 'pointer',
+                      background: 'transparent', transition: 'background .1s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                  >清除筛选</button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* View Layers 深色实心按钮（对齐截图） */}
+        <div style={{ position: 'relative' }} ref={layerRef}>
+          <button
+            onClick={() => { setShowLayerDropdown(!showLayerDropdown); setShowFilterDropdown(false); }}
+            style={{
+              height: 40, padding: '0 20px', borderRadius: 20,
+              border: 'none', cursor: 'pointer',
+              background: showLayerDropdown ? 'var(--accent)' : '#1e293b',
+              color: '#fff', display: 'flex', alignItems: 'center', gap: 8,
+              fontSize: 14, fontWeight: 600,
+              boxShadow: '0 2px 8px rgba(0,0,0,.15)',
+              transition: 'background .15s, box-shadow .15s, transform .1s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,.2)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,.15)'; }}
+          >
+            <Diamond size={14} fill="#fff" />
+            <span>View Layers</span>
+          </button>
+
+          {/* Layers 下拉 */}
+          {showLayerDropdown && (
+            <div style={{
+              position: 'absolute', right: 0, top: '100%', marginTop: 8,
+              width: 240, borderRadius: 14, padding: '8px 0',
+              background: 'var(--bg-surface)', border: '1px solid var(--border-primary)',
+              boxShadow: '0 8px 32px rgba(0,0,0,.12)', zIndex: 50,
+            }}>
+              <div style={{ padding: '8px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)' }}>显示图层</div>
+              {(Object.keys(LAYER_CONFIG) as LayerType[]).map((layer) => (
+                <button key={layer} onClick={() => toggleLayer(layer)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '10px 16px', fontSize: 14, border: 'none', cursor: 'pointer',
+                    background: 'transparent', color: 'var(--text-secondary)', transition: 'background .1s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <div style={{
+                    width: 18, height: 18, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    border: `2px solid ${visibleLayers[layer] ? 'var(--accent)' : 'var(--border-secondary)'}`,
+                    background: visibleLayers[layer] ? 'var(--accent)' : 'transparent',
+                    transition: 'all .12s',
+                  }}>
+                    {visibleLayers[layer] && <span style={{ color: '#fff', fontSize: 11 }}>✓</span>}
+                  </div>
+                  <div style={{ width: 12, height: 12, borderRadius: 3, backgroundColor: LAYER_CONFIG[layer].color }} />
+                  <span>{LAYER_CONFIG[layer].name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

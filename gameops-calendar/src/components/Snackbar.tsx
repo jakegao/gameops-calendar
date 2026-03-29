@@ -19,21 +19,21 @@ export default function Snackbar() {
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] animate-fade-in">
-      <div className="flex items-center gap-3 px-5 py-3 rounded-lg min-w-[320px]"
-        style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)', boxShadow: '0 4px 12px rgba(0,0,0,.25)' }}>
+      <div className="flex items-center gap-4 px-6 py-4 rounded-xl min-w-[360px]"
+        style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)', boxShadow: '0 4px 16px rgba(0,0,0,.25)' }}>
         <span className="text-[14px] flex-1">{snackbar.message}</span>
         {snackbar.undoEntry && (
           <button onClick={undoDelete}
-            className="flex items-center gap-1.5 text-[14px] font-medium transition-colors"
+            className="flex items-center gap-2 h-11 px-4 rounded-xl text-[14px] font-medium transition-colors"
             style={{ color: 'var(--accent)' }}>
             <Undo2 size={16} />
             撤销
           </button>
         )}
-        <button onClick={dismissSnackbar} className="transition-colors" style={{ color: 'var(--text-muted)' }}
+        <button onClick={dismissSnackbar} className="w-11 h-11 rounded-xl flex items-center justify-center transition-colors" style={{ color: 'var(--text-muted)' }}
           onMouseEnter={(e) => e.currentTarget.style.color = 'var(--bg-primary)'}
           onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}>
-          <X size={16} />
+          <X size={18} />
         </button>
       </div>
     </div>

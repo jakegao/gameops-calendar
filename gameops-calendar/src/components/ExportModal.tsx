@@ -140,14 +140,14 @@ export default function ExportModal() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center animate-fade-in">
       <div className="absolute inset-0 bg-black/25" onClick={closeExportModal} />
-      <div className="relative w-[480px] rounded-2xl animate-scale-in"
-        style={{ background: 'var(--bg-surface)', boxShadow: 'var(--shadow-modal)' }}>
+      <div className="relative rounded-2xl animate-scale-in"
+        style={{ width: 480, background: 'var(--bg-surface)', boxShadow: 'var(--shadow-modal)' }}>
         <div className="flex items-center justify-between px-8 py-5 border-b" style={{ borderColor: 'var(--border-primary)' }}>
           <div className="flex items-center gap-3">
             {mode === 'export' ? <Download size={22} style={{ color: 'var(--accent)' }} /> : <Upload size={22} style={{ color: 'var(--accent)' }} />}
             <h2 className="text-[20px]" style={{ color: 'var(--text-primary)' }}>{mode === 'export' ? '导出排期' : '导入数据'}</h2>
           </div>
-          <button onClick={closeExportModal} className="w-10 h-10 rounded-full flex items-center justify-center t-bg-hover transition-colors" style={{ color: 'var(--text-tertiary)' }}>
+          <button onClick={closeExportModal} className="w-11 h-11 rounded-full flex items-center justify-center t-bg-hover transition-colors" style={{ color: 'var(--text-tertiary)' }}>
             <X size={22} />
           </button>
         </div>
@@ -155,7 +155,7 @@ export default function ExportModal() {
         <div className="flex border-b" style={{ borderColor: 'var(--border-primary)' }}>
           {(['export', 'import'] as const).map((m) => (
             <button key={m} onClick={() => { setMode(m); setImportResult(null); }}
-              className="flex-1 py-3 text-[14px] font-medium transition-colors relative"
+              className="flex-1 h-11 text-[14px] font-medium transition-colors relative flex items-center justify-center"
               style={{ color: mode === m ? 'var(--accent)' : 'var(--text-tertiary)' }}>
               {m === 'export' ? <><Download size={16} className="inline mr-2" />导出</> : <><Upload size={16} className="inline mr-2" />导入</>}
               {mode === m && <div className="absolute bottom-0 left-2 right-2 h-[2px]" style={{ background: 'var(--accent)' }} />}
@@ -194,11 +194,11 @@ export default function ExportModal() {
             </div>
             <div className="flex justify-end gap-3 px-8 py-5 border-t" style={{ borderColor: 'var(--border-primary)' }}>
               <button onClick={closeExportModal}
-                className="h-10 px-5 rounded-full text-[14px] font-medium transition-colors" style={{ color: 'var(--accent)' }}
+                className="h-11 px-6 rounded-full text-[14px] font-medium transition-colors" style={{ color: 'var(--accent)' }}
                 onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent-bg)'}
                 onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>取消</button>
               <button onClick={handleExport} disabled={exporting}
-                className="btn-primary h-10 px-6 flex items-center gap-2 text-[14px] disabled:opacity-50">
+                className="btn-primary h-11 px-7 flex items-center gap-2 text-[14px] disabled:opacity-50">
                 <Download size={16} />{exporting ? '导出中...' : '导出'}
               </button>
             </div>
@@ -216,7 +216,7 @@ export default function ExportModal() {
               <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleImportCsv} />
             </div>
             {importResult && (
-              <div className={`mt-4 text-[14px] text-center font-medium ${importResult.includes('成功') ? 'text-[#0d652d]' : 'text-[#c5221f]'}`}>
+              <div className={`mt-4 text-[14px] text-center font-medium ${importResult.includes('成功') ? 'text-[#34c759]' : 'text-[#ff3b30]'}`}>
                 {importResult}
               </div>
             )}

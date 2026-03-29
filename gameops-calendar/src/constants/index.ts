@@ -1,12 +1,17 @@
 import type { EventCategory, EventSubType, EventStatus, Priority, TeamRole, LayerType } from '../types/index.ts';
 
-/** 活动分类颜色 */
+/**
+ * Apple SF System Colors — 统一色板
+ * https://developer.apple.com/design/human-interface-guidelines/color
+ */
+
+/** 活动分类颜色 — Apple System Colors */
 export const CATEGORY_COLORS: Record<EventCategory, string> = {
-  paid: '#f59e0b',
-  engagement: '#22c55e',
-  version: '#3b82f6',
-  esports: '#a855f7',
-  marketing: '#ec4899',
+  paid: '#ff9f0a',       // Apple System Orange
+  engagement: '#34c759', // Apple System Green
+  version: '#007aff',    // Apple System Blue
+  esports: '#af52de',    // Apple System Purple
+  marketing: '#ff2d55',  // Apple System Pink
 };
 
 /** 活动分类名称 */
@@ -52,24 +57,24 @@ export const SUBTYPE_CATEGORY: Record<EventSubType, EventCategory> = {
   brand_collab: 'marketing', kol_campaign: 'marketing', store_feature: 'marketing', social_campaign: 'marketing',
 };
 
-/** 状态名称与颜色 */
+/** 状态名称与颜色 — Apple System Colors + color-mix for backgrounds */
 export const STATUS_CONFIG: Record<EventStatus, { name: string; color: string; bg: string }> = {
-  draft: { name: '草稿', color: '#5e6c84', bg: '#f4f5f7' },
-  planned: { name: '已规划', color: '#0052cc', bg: '#deebff' },
-  in_review: { name: '评审中', color: '#ff991f', bg: '#fffae6' },
-  approved: { name: '已批准', color: '#36b37e', bg: '#e3fcef' },
-  in_progress: { name: '进行中', color: '#6554c0', bg: '#eae6ff' },
-  live: { name: '已上线', color: '#de350b', bg: '#ffebe6' },
-  completed: { name: '已完成', color: '#5e6c84', bg: '#f4f5f7' },
-  cancelled: { name: '已取消', color: '#97a0af', bg: '#f4f5f7' },
+  draft:       { name: '草稿',   color: '#8e8e93', bg: 'color-mix(in srgb, #8e8e93 8%, #f5f5f7)' },
+  planned:     { name: '已规划', color: '#007aff', bg: 'color-mix(in srgb, #007aff 8%, #f5f5f7)' },
+  in_review:   { name: '评审中', color: '#ff9f0a', bg: 'color-mix(in srgb, #ff9f0a 8%, #f5f5f7)' },
+  approved:    { name: '已批准', color: '#34c759', bg: 'color-mix(in srgb, #34c759 8%, #f5f5f7)' },
+  in_progress: { name: '进行中', color: '#af52de', bg: 'color-mix(in srgb, #af52de 8%, #f5f5f7)' },
+  live:        { name: '已上线', color: '#ff3b30', bg: 'color-mix(in srgb, #ff3b30 8%, #f5f5f7)' },
+  completed:   { name: '已完成', color: '#8e8e93', bg: 'color-mix(in srgb, #8e8e93 8%, #f5f5f7)' },
+  cancelled:   { name: '已取消', color: '#aeaeb2', bg: 'color-mix(in srgb, #aeaeb2 6%, #f5f5f7)' },
 };
 
-/** 优先级配置 */
+/** 优先级配置 — Apple System Colors */
 export const PRIORITY_CONFIG: Record<Priority, { name: string; color: string }> = {
-  P0: { name: 'P0 - 最高', color: '#ef4444' },
-  P1: { name: 'P1 - 高', color: '#f59e0b' },
-  P2: { name: 'P2 - 中', color: '#3b82f6' },
-  P3: { name: 'P3 - 低', color: '#6b7280' },
+  P0: { name: 'P0 - 最高', color: '#ff3b30' },  // Apple System Red
+  P1: { name: 'P1 - 高',   color: '#ff9f0a' },  // Apple System Orange
+  P2: { name: 'P2 - 中',   color: '#007aff' },  // Apple System Blue
+  P3: { name: 'P3 - 低',   color: '#8e8e93' },  // Apple System Gray
 };
 
 /** 角色配置 */
@@ -83,11 +88,11 @@ export const ROLE_CONFIG: Record<TeamRole, { name: string; icon: string }> = {
   data_analyst: { name: '数据分析', icon: '📊' },
 };
 
-/** 图层配置 */
+/** 图层配置 — Apple System Colors */
 export const LAYER_CONFIG: Record<LayerType, { name: string; color: string; defaultVisible: boolean }> = {
-  activity: { name: '运营活动', color: '#f59e0b', defaultVisible: true },
-  version: { name: '版本更新', color: '#3b82f6', defaultVisible: true },
-  holiday: { name: '节假日/赛事', color: '#ef4444', defaultVisible: true },
-  esports: { name: '电竞赛事', color: '#a855f7', defaultVisible: true },
-  marketing: { name: '市场推广', color: '#ec4899', defaultVisible: false },
+  activity: { name: '运营活动', color: '#ff9f0a', defaultVisible: true },
+  version: { name: '版本更新', color: '#007aff', defaultVisible: true },
+  holiday: { name: '节假日/赛事', color: '#ff3b30', defaultVisible: true },
+  esports: { name: '电竞赛事', color: '#af52de', defaultVisible: true },
+  marketing: { name: '市场推广', color: '#ff2d55', defaultVisible: false },
 };
