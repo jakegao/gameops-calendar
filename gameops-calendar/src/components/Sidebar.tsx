@@ -1,14 +1,14 @@
 import { useMemo } from 'react';
 import {
   Calendar, BarChart3, LayoutGrid, Menu,
-  Sparkles, ArrowLeftRight, HelpCircle, Moon, Sun, BarChart2, GanttChart,
+  Sparkles, ArrowLeftRight, HelpCircle, Moon, Sun, BarChart2, GanttChart, FolderOpen,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore.ts';
 
 interface Props { expanded: boolean; onToggle: () => void; darkMode: boolean; onToggleDark: () => void; onShowHelp?: () => void }
 
 export default function Sidebar({ expanded, onToggle, darkMode, onToggleDark, onShowHelp }: Props) {
-  const { currentView, setCurrentView, openTemplateModal, openExportModal } = useAppStore();
+  const { currentView, setCurrentView, openTemplateModal, openExportModal, openVersionManager } = useAppStore();
 
   /* ---- 导航项（对齐截图中的6项） ---- */
   const navItems = [
@@ -150,6 +150,27 @@ export default function Sidebar({ expanded, onToggle, darkMode, onToggleDark, on
             {expanded && <span>模板创建</span>}
           </button>
           <Tip text="模板创建" />
+        </div>
+        {/* 版本管理 */}
+        <div style={{ position: 'relative' }} className="group">
+          <button
+            onClick={openVersionManager}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center',
+              gap: 14, height: 48, borderRadius: 12,
+              padding: expanded ? '0 16px' : '0',
+              justifyContent: expanded ? 'flex-start' : 'center',
+              background: 'transparent', color: 'var(--text-nav)',
+              border: 'none', cursor: 'pointer', fontSize: 15, fontWeight: 500,
+              transition: 'background .15s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            <FolderOpen size={20} strokeWidth={1.6} />
+            {expanded && <span>版本管理</span>}
+          </button>
+          <Tip text="版本管理" />
         </div>
       </nav>
 

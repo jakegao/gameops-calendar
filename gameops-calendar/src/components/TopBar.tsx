@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, Filter, Layers, ChevronLeft, ChevronRight, Diamond, X } from 'lucide-react';
+import { Search, Filter, Layers, ChevronLeft, ChevronRight, Diamond, X, FolderOpen } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore.ts';
-import { format, addMonths, subMonths, addWeeks, subWeeks, addDays, subDays } from 'date-fns';
+import { format, addMonths, subMonths, addWeeks, subWeeks, addDays, subDays, getWeek, parseISO } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { CATEGORY_NAMES, LAYER_CONFIG, ROLE_CONFIG } from '../constants/index.ts';
+import { CATEGORY_NAMES, LAYER_CONFIG, ROLE_CONFIG, VERSION_STATUS_CONFIG } from '../constants/index.ts';
 import type { EventCategory, LayerType, TeamRole } from '../types/index.ts';
 
 interface Props { viewLabel: string }
@@ -13,18 +13,22 @@ export default function TopBar({ viewLabel }: Props) {
     currentView, calendarView, setCalendarView,
     currentDate, setCurrentDate, searchQuery, setSearchQuery,
     visibleLayers, toggleLayer, filterCategories, setFilterCategories,
-    filterRole, setFilterRole,
+    filterRole, setFilterRole, filterVersionId, setFilterVersionId,
+    versions, openVersionManager,
   } = useAppStore();
 
   const [showLayerDropdown, setShowLayerDropdown] = useState(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [showVersionDropdown, setShowVersionDropdown] = useState(false);
   const layerRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
+  const versionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (layerRef.current && !layerRef.current.contains(e.target as Node)) setShowLayerDropdown(false);
       if (filterRef.current && !filterRef.current.contains(e.target as Node)) setShowFilterDropdown(false);
+      if (versionRef.current && !versionRef.current.contains(e.target as Node)) setShowVersionDropdown(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -49,7 +53,7 @@ export default function TopBar({ viewLabel }: Props) {
 
   const dateLabel = () => {
     if (calendarView === 'month' || currentView !== 'calendar') return format(currentDate, 'yyyy年M月', { locale: zhCN });
-    if (calendarView === 'week') return format(currentDate, 'yyyy年 M月 第W周', { locale: zhCN });
+    if (calendarView === 'week') return `${format(currentDate, 'yyyy年 M月', { locale: zhCN })} 第${getWeek(currentDate, { weekStartsOn: 0 })}周`;
     return format(currentDate, 'yyyy年M月d日', { locale: zhCN });
   };
 
@@ -167,8 +171,92 @@ export default function TopBar({ viewLabel }: Props) {
         )}
       </div>
 
-      {/* ====== 右侧：Filter + View Layers ====== */}
+      {/* ====== 右侧：Version + Filter + View Layers ====== */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+
+        {/* Version 版本选择器 */}
+        <div style={{ position: 'relative' }} ref={versionRef}>
+          <button
+            onClick={() => { setShowVersionDropdown(!showVersionDropdown); setShowFilterDropdown(false); setShowLayerDropdown(false); }}
+            style={{
+              height: 40, padding: '0 16px', borderRadius: 20,
+              border: `1px solid ${filterVersionId ? 'var(--accent)' : 'var(--border-secondary)'}`,
+              background: filterVersionId ? 'color-mix(in srgb, var(--accent) 6%, var(--bg-surface))' : 'var(--bg-surface)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+              fontSize: 14, fontWeight: 500,
+              color: filterVersionId ? 'var(--accent)' : 'var(--text-secondary)',
+              transition: 'border-color .12s, background .12s',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--text-tertiary)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = filterVersionId ? 'var(--accent)' : 'var(--border-secondary)'; }}
+          >
+            <FolderOpen size={15} />
+            <span>{filterVersionId ? (versions.find((v) => v.id === filterVersionId)?.displayName || '版本') : '版本'}</span>
+            {filterVersionId && (
+              <span onClick={(e) => { e.stopPropagation(); setFilterVersionId(null); }} style={{
+                width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'var(--accent)', color: '#fff', fontSize: 10, cursor: 'pointer',
+              }}><X size={10} /></span>
+            )}
+          </button>
+
+          {showVersionDropdown && (
+            <div style={{
+              position: 'absolute', right: 0, top: '100%', marginTop: 8,
+              width: 280, borderRadius: 14, padding: '8px 0',
+              background: 'var(--bg-surface)', border: '1px solid var(--border-primary)',
+              boxShadow: '0 8px 32px rgba(0,0,0,.12)', zIndex: 50,
+              maxHeight: '60vh', overflowY: 'auto',
+            }}>
+              <div style={{ padding: '8px 16px', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)' }}>选择版本</div>
+              <button onClick={() => { setFilterVersionId(null); setShowVersionDropdown(false); }}
+                style={{
+                  width: '100%', textAlign: 'left', padding: '10px 16px', fontSize: 14,
+                  border: 'none', cursor: 'pointer', background: 'transparent',
+                  color: !filterVersionId ? 'var(--accent)' : 'var(--text-secondary)',
+                  fontWeight: !filterVersionId ? 600 : 400, transition: 'background .1s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              >全部版本</button>
+              {[...versions].sort((a, b) => a.startDate.localeCompare(b.startDate)).map((v) => {
+                const stCfg = VERSION_STATUS_CONFIG[v.status];
+                return (
+                  <button key={v.id} onClick={() => { setFilterVersionId(v.id); setCurrentDate(parseISO(v.startDate)); setShowVersionDropdown(false); }}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '10px 16px', fontSize: 14, border: 'none', cursor: 'pointer',
+                      background: 'transparent',
+                      color: filterVersionId === v.id ? 'var(--accent)' : 'var(--text-secondary)',
+                      fontWeight: filterVersionId === v.id ? 600 : 400, transition: 'background .1s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: v.color, flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.displayName}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-placeholder)', marginTop: 2 }}>
+                        {v.startDate.slice(5)} — {v.endDate.slice(5)}
+                      </div>
+                    </div>
+                    <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: stCfg.bg, color: stCfg.color }}>{stCfg.name}</span>
+                  </button>
+                );
+              })}
+              <div style={{ borderTop: '1px solid var(--border-primary)', margin: '6px 0' }} />
+              <button onClick={() => { setShowVersionDropdown(false); openVersionManager(); }}
+                style={{
+                  width: '100%', textAlign: 'left', padding: '10px 16px', fontSize: 14,
+                  fontWeight: 600, color: 'var(--accent)', border: 'none', cursor: 'pointer',
+                  background: 'transparent', transition: 'background .1s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              >管理版本...</button>
+            </div>
+          )}
+        </div>
 
         {/* Filter 按钮（pill边框样式） */}
         <div style={{ position: 'relative' }} ref={filterRef}>

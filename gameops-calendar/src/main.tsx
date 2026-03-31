@@ -12,8 +12,17 @@ try {
       localStorage.removeItem('gameops-calendar-events');
     }
   }
+  // 清理旧版本缓存（版本数据结构可能已更新）
+  const verRaw = localStorage.getItem('gameops-calendar-versions');
+  if (verRaw) {
+    const parsed = JSON.parse(verRaw);
+    if (!Array.isArray(parsed) || (parsed.length > 0 && !parsed[0].color)) {
+      localStorage.removeItem('gameops-calendar-versions');
+    }
+  }
 } catch {
   localStorage.removeItem('gameops-calendar-events');
+  localStorage.removeItem('gameops-calendar-versions');
   localStorage.removeItem('gameops-calendar-comments');
   localStorage.removeItem('gameops-calendar-changelogs');
   localStorage.removeItem('gameops-calendar-sharelinks');

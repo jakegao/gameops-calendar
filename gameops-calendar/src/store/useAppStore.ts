@@ -1,16 +1,17 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import type {
-  GameEvent, Holiday, EventTemplate, ConflictInfo,
+  GameEvent, Holiday, EventTemplate, ConflictInfo, GameVersion,
   CalendarView, GanttScale, LayerType, TeamRole, EventCategory,
   Comment, ChangeLog, CurrentUser, ShareLink,
 } from '../types/index.ts';
-import { mockEvents, mockHolidays, mockTemplates } from '../data/mockData.ts';
+import { mockEvents, mockHolidays, mockTemplates, mockVersions } from '../data/mockData.ts';
 import { SUBTYPE_CATEGORY, CATEGORY_COLORS } from '../constants/index.ts';
 import { parseISO, areIntervalsOverlapping } from 'date-fns';
 
 // P3-23: localStorage 持久化
 const STORAGE_KEY = 'gameops-calendar-events';
+const VERSIONS_KEY = 'gameops-calendar-versions';
 const COMMENTS_KEY = 'gameops-calendar-comments';
 const CHANGELOGS_KEY = 'gameops-calendar-changelogs';
 const SHARELINKS_KEY = 'gameops-calendar-sharelinks';
@@ -24,6 +25,16 @@ function loadEvents(): GameEvent[] {
 }
 function saveEvents(events: GameEvent[]) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(events)); } catch { /* ignore */ }
+}
+function loadVersions(): GameVersion[] {
+  try {
+    const raw = localStorage.getItem(VERSIONS_KEY);
+    if (raw) { const parsed = JSON.parse(raw); if (Array.isArray(parsed) && parsed.length > 0) return parsed; }
+  } catch { /* ignore */ }
+  return mockVersions;
+}
+function saveVersions(versions: GameVersion[]) {
+  try { localStorage.setItem(VERSIONS_KEY, JSON.stringify(versions)); } catch { /* ignore */ }
 }
 function loadComments(): Comment[] {
   try { const raw = localStorage.getItem(COMMENTS_KEY); if (raw) return JSON.parse(raw); } catch { /* ignore */ }
@@ -63,6 +74,7 @@ interface AppState {
   events: GameEvent[];
   holidays: Holiday[];
   templates: EventTemplate[];
+  versions: GameVersion[];
 
   // === 视图状态 ===
   currentView: 'calendar' | 'gantt' | 'board' | 'dashboard';
@@ -77,6 +89,7 @@ interface AppState {
   // === 过滤 ===
   filterCategories: EventCategory[];
   filterRole: TeamRole | null;
+  filterVersionId: string | null;
   searchQuery: string;
 
   // === 弹窗 ===
@@ -85,6 +98,7 @@ interface AppState {
   isTemplateModalOpen: boolean;
   isExportModalOpen: boolean;
   isDetailPanelOpen: boolean;
+  isVersionManagerOpen: boolean;
 
   // === Snackbar ===
   snackbar: { message: string; undoEntry?: UndoEntry | null } | null;
@@ -98,6 +112,7 @@ interface AppState {
   toggleLayer: (layer: LayerType) => void;
   setFilterCategories: (cats: EventCategory[]) => void;
   setFilterRole: (role: TeamRole | null) => void;
+  setFilterVersionId: (versionId: string | null) => void;
   setSearchQuery: (q: string) => void;
 
   // === CRUD ===
@@ -145,6 +160,16 @@ interface AppState {
   // === 双击新建传入默认日期 (B3修复) ===
   defaultStartDate: string | null;
   setDefaultStartDate: (d: string | null) => void;
+
+  // === M1: 版本管理 ===
+  addVersion: (version: Omit<GameVersion, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateVersion: (id: string, updates: Partial<GameVersion>) => void;
+  deleteVersion: (id: string) => void;
+  openVersionManager: () => void;
+  closeVersionManager: () => void;
+  getActiveVersion: () => GameVersion | null;
+  getVersionForDate: (date: string) => GameVersion | null;
+  getVersionEvents: (versionId: string) => GameEvent[];
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -152,6 +177,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   events: loadEvents(),
   holidays: mockHolidays,
   templates: mockTemplates,
+  versions: loadVersions(),
 
   // === 视图状态 ===
   currentView: 'calendar',
@@ -172,6 +198,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   // === 过滤 ===
   filterCategories: [],
   filterRole: null,
+  filterVersionId: null,
   searchQuery: '',
 
   // === 弹窗 ===
@@ -180,6 +207,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   isTemplateModalOpen: false,
   isExportModalOpen: false,
   isDetailPanelOpen: false,
+  isVersionManagerOpen: false,
 
   // === Snackbar ===
   snackbar: null,
@@ -200,6 +228,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     })),
   setFilterCategories: (cats) => set({ filterCategories: cats }),
   setFilterRole: (role) => set({ filterRole: role }),
+  setFilterVersionId: (versionId) => set({ filterVersionId: versionId }),
   setSearchQuery: (q) => set({ searchQuery: q }),
 
   // === CRUD ===
@@ -269,12 +298,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     const start = parseISO(startDate);
     const end = new Date(start);
     end.setDate(end.getDate() + tpl.defaultDuration);
+    const endDateStr = end.toISOString().slice(0, 10);
     const now = new Date().toISOString();
+    const matchedVersion = get().versions.find((v) => startDate >= v.startDate && startDate <= v.endDate);
     const newEvent: GameEvent = {
       id: uuidv4(), title: tpl.name, description: tpl.description, category: tpl.category,
       subType: tpl.subType, priority: 'P1', status: 'draft', startDate,
-      endDate: end.toISOString().slice(0, 10), color: tpl.color, tags: [...tpl.defaultTags],
+      endDate: endDateStr, color: tpl.color, tags: [...tpl.defaultTags],
       owner: '', teamRoles: [...tpl.defaultTeamRoles], dependencies: [], notes: '', createdAt: now, updatedAt: now,
+      versionId: matchedVersion?.id,
     };
     set((s) => {
       const events = [...s.events, newEvent];
@@ -325,10 +357,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     const old = get().events.find((e) => e.id === id);
     const user = get().currentUser;
     const now = new Date().toISOString();
+    const matchedVersion = get().versions.find((v) => newStartDate >= v.startDate && newStartDate <= v.endDate);
     const log: ChangeLog = { id: uuidv4(), eventId: id, action: 'update', author: user.name, detail: `拖拽移动「${old?.title || ''}」日期至 ${newStartDate}~${newEndDate}`, timestamp: now };
     set((s) => {
       const events = s.events.map((e) =>
-        e.id === id ? { ...e, startDate: newStartDate, endDate: newEndDate, updatedAt: now } : e
+        e.id === id ? { ...e, startDate: newStartDate, endDate: newEndDate, versionId: matchedVersion?.id, updatedAt: now } : e
       );
       const changeLogs = [...s.changeLogs, log];
       saveEvents(events);
@@ -339,7 +372,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   // === 工具方法 ===
   getFilteredEvents: () => {
-    const { events, filterCategories, filterRole, searchQuery, visibleLayers } = get();
+    const { events, filterCategories, filterRole, filterVersionId, searchQuery, visibleLayers } = get();
     let filtered = events;
     filtered = filtered.filter((e) => {
       const layerMap: Record<EventCategory, LayerType> = {
@@ -349,6 +382,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
     if (filterCategories.length > 0) filtered = filtered.filter((e) => filterCategories.includes(e.category));
     if (filterRole) filtered = filtered.filter((e) => e.teamRoles.includes(filterRole));
+    if (filterVersionId) {
+      const ver = get().versions.find((v) => v.id === filterVersionId);
+      if (ver) {
+        filtered = filtered.filter((e) =>
+          e.versionId === filterVersionId ||
+          (e.startDate <= ver.endDate && e.endDate >= ver.startDate)
+        );
+      }
+    }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter((e) =>
@@ -434,5 +476,58 @@ export const useAppStore = create<AppState>((set, get) => ({
       return { shareLinks };
     });
     return link;
+  },
+
+  // === M1: 版本管理 ===
+  openVersionManager: () => set({ isVersionManagerOpen: true }),
+  closeVersionManager: () => set({ isVersionManagerOpen: false }),
+
+  addVersion: (versionData) => {
+    const now = new Date().toISOString();
+    const newVersion: GameVersion = { ...versionData, id: uuidv4(), createdAt: now, updatedAt: now };
+    set((s) => {
+      const versions = [...s.versions, newVersion];
+      saveVersions(versions);
+      return { versions };
+    });
+  },
+
+  updateVersion: (id, updates) => {
+    const now = new Date().toISOString();
+    set((s) => {
+      const versions = s.versions.map((v) => v.id === id ? { ...v, ...updates, updatedAt: now } : v);
+      saveVersions(versions);
+      return { versions };
+    });
+  },
+
+  deleteVersion: (id) => {
+    set((s) => {
+      const versions = s.versions.filter((v) => v.id !== id);
+      const events = s.events.map((e) => e.versionId === id ? { ...e, versionId: undefined } : e);
+      saveVersions(versions);
+      saveEvents(events);
+      return { versions, events, filterVersionId: s.filterVersionId === id ? null : s.filterVersionId };
+    });
+  },
+
+  getActiveVersion: () => {
+    const { versions } = get();
+    return versions.find((v) => v.status === 'active') || null;
+  },
+
+  getVersionForDate: (date) => {
+    const { versions } = get();
+    return versions.find((v) => date >= v.startDate && date <= v.endDate) || null;
+  },
+
+  getVersionEvents: (versionId) => {
+    const { events, versions } = get();
+    const ver = versions.find((v) => v.id === versionId);
+    if (!ver) return [];
+    return events.filter((e) =>
+      e.versionId === versionId ||
+      (e.startDate <= ver.endDate && e.endDate >= ver.startDate)
+    );
   },
 }));

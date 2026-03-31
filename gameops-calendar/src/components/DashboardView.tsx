@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore.ts';
-import { CATEGORY_COLORS, CATEGORY_NAMES } from '../constants/index.ts';
+import { CATEGORY_COLORS, CATEGORY_NAMES, VERSION_STATUS_CONFIG } from '../constants/index.ts';
 import type { EventCategory } from '../types/index.ts';
+import { parseISO, differenceInDays, format } from 'date-fns';
 
 /* 简化分类名 */
 const CAT_SHORT: Record<string, string> = {
@@ -9,10 +10,22 @@ const CAT_SHORT: Record<string, string> = {
   esports: '电竞赛事', marketing: '市场推广',
 };
 
+const SIM_TODAY = new Date(2026, 2, 26);
+
 export default function DashboardView() {
-  const events = useAppStore((s) => s.events);
+  const storeEvents = useAppStore((s) => s.events);
   const holidays = useAppStore((s) => s.holidays);
   const openDetailPanel = useAppStore((s) => s.openDetailPanel);
+  const filterCategories = useAppStore((s) => s.filterCategories);
+  const filterRole = useAppStore((s) => s.filterRole);
+  const filterVersionId = useAppStore((s) => s.filterVersionId);
+  const searchQuery = useAppStore((s) => s.searchQuery);
+  const visibleLayers = useAppStore((s) => s.visibleLayers);
+  const getFilteredEvents = useAppStore((s) => s.getFilteredEvents);
+  const versions = useAppStore((s) => s.versions);
+
+  const events = useMemo(() => getFilteredEvents(), [storeEvents, filterCategories, filterRole, filterVersionId, searchQuery, visibleLayers, getFilteredEvents]);
+  const currentVersion = useMemo(() => filterVersionId ? versions.find((v) => v.id === filterVersionId) : null, [filterVersionId, versions]);
 
   const total = events.length;
   const active = events.filter((e) => !['completed', 'cancelled'].includes(e.status)).length;
@@ -107,6 +120,46 @@ export default function DashboardView() {
   return (
     <div style={{ height: '100%', overflow: 'auto', background: 'var(--bg-secondary)' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+        {/* 版本概览横幅（选中版本时显示） */}
+        {currentVersion && (() => {
+          const vDays = differenceInDays(parseISO(currentVersion.endDate), parseISO(currentVersion.startDate)) + 1;
+          const elapsed = Math.max(0, differenceInDays(SIM_TODAY, parseISO(currentVersion.startDate)));
+          const progressPct = Math.min(100, Math.round((elapsed / vDays) * 100));
+          const stCfg = VERSION_STATUS_CONFIG[currentVersion.status];
+          return (
+            <div style={{
+              padding: '20px 24px', borderRadius: 16,
+              background: `linear-gradient(135deg, ${currentVersion.color}18, ${currentVersion.color}08)`,
+              border: `1px solid ${currentVersion.color}30`,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 6, height: 32, borderRadius: 3, background: currentVersion.color }} />
+                  <div>
+                    <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)' }}>{currentVersion.displayName}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                      {format(parseISO(currentVersion.startDate), 'yyyy/MM/dd')} — {format(parseISO(currentVersion.endDate), 'yyyy/MM/dd')} · {vDays}天
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: stCfg.bg, color: stCfg.color }}>{stCfg.name}</span>
+                  <span style={{ fontSize: 24, fontWeight: 700, color: currentVersion.color }}>{events.length}</span>
+                  <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>个活动</span>
+                </div>
+              </div>
+              <div style={{ height: 6, borderRadius: 3, background: 'var(--bg-tertiary)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', borderRadius: 3, width: `${progressPct}%`, background: currentVersion.color, transition: 'width .5s ease' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 11, color: 'var(--text-muted)' }}>
+                <span>已过 {elapsed} 天</span>
+                <span>进度 {progressPct}%</span>
+                <span>剩余 {Math.max(0, vDays - elapsed)} 天</span>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ====== 顶部 4 张统计卡片 ====== */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>

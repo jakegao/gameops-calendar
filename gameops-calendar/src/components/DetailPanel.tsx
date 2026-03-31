@@ -1,14 +1,14 @@
 import { useEffect, useCallback, useState } from 'react';
-import { X, Edit3, Copy, Trash2, Calendar, User, Tag, ArrowRight, MessageSquare, History, Share2, Send, Link2 } from 'lucide-react';
+import { X, Edit3, Copy, Trash2, Calendar, User, Tag, ArrowRight, MessageSquare, History, Share2, Send, Link2, FolderOpen, Package } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore.ts';
-import { CATEGORY_NAMES, CATEGORY_COLORS, SUBTYPE_NAMES, STATUS_CONFIG, PRIORITY_CONFIG, ROLE_CONFIG } from '../constants/index.ts';
+import { CATEGORY_NAMES, CATEGORY_COLORS, SUBTYPE_NAMES, STATUS_CONFIG, PRIORITY_CONFIG, ROLE_CONFIG, POOL_TYPE_NAMES, MODULE_CATEGORY_NAMES } from '../constants/index.ts';
 import { parseISO, differenceInDays, format } from 'date-fns';
 
 type TabType = 'info' | 'comments' | 'history';
 
 export default function DetailPanel() {
   const { isDetailPanelOpen, selectedEventId, events, closeDetailPanel, openEventModal, duplicateEvent, deleteEvent,
-    addComment, getEventComments, getEventChangeLogs, createShareLink, isShareMode, currentUser } = useAppStore();
+    addComment, getEventComments, getEventChangeLogs, createShareLink, isShareMode, currentUser, versions } = useAppStore();
   const canEdit = !isShareMode && currentUser.permission !== 'viewer';
 
   const [tab, setTab] = useState<TabType>('info');
@@ -240,6 +240,69 @@ export default function DetailPanel() {
                   {evt.teamRoles.length === 0 && <span style={{ fontSize: 14, color: 'var(--text-placeholder)' }}>无</span>}
                 </div>
               </SectionBlock>
+
+              {/* 版本 & 排期信息（TK扩展） — 自动推断版本 */}
+              {(() => {
+                const inferredVersion = evt.versionId
+                  ? versions.find((v) => v.id === evt.versionId)
+                  : versions.find((v) => evt.startDate <= v.endDate && evt.endDate >= v.startDate);
+                const hasTkFields = evt.poolType || evt.coreRewards || evt.moduleCategory || evt.maxDiscount != null || evt.canUseCoupon != null || evt.promotionMethod;
+                if (!inferredVersion && !hasTkFields) return null;
+                return (
+                <SectionBlock title="排期信息">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    {inferredVersion && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <FolderOpen size={15} style={{ color: inferredVersion.color, flexShrink: 0 }} />
+                        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{inferredVersion.displayName}</span>
+                        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{inferredVersion.startDate.slice(5)} — {inferredVersion.endDate.slice(5)}</span>
+                        {!evt.versionId && <span style={{ fontSize: 10, fontWeight: 600, padding: '1px 6px', borderRadius: 4, background: 'var(--bg-tertiary)', color: 'var(--text-placeholder)' }}>自动推断</span>}
+                      </div>
+                    )}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      {evt.moduleCategory && (
+                        <div style={{ padding: '10px 14px', borderRadius: 10, background: 'var(--bg-secondary)' }}>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>模块分类</div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{MODULE_CATEGORY_NAMES[evt.moduleCategory] || evt.moduleCategory}</div>
+                        </div>
+                      )}
+                      {evt.poolType && (
+                        <div style={{ padding: '10px 14px', borderRadius: 10, background: 'var(--bg-secondary)' }}>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>奖池类型</div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{POOL_TYPE_NAMES[evt.poolType] || evt.poolType}</div>
+                        </div>
+                      )}
+                    </div>
+                    {evt.coreRewards && (
+                      <div style={{ padding: '10px 14px', borderRadius: 10, background: 'var(--bg-secondary)' }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>核心奖励</div>
+                        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.6 }}>{evt.coreRewards}</div>
+                      </div>
+                    )}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                      {evt.maxDiscount != null && (
+                        <div style={{ padding: '10px 14px', borderRadius: 10, background: 'var(--bg-secondary)' }}>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>最大折扣</div>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: '#ff9f0a' }}>{evt.maxDiscount}</div>
+                        </div>
+                      )}
+                      {evt.canUseCoupon != null && (
+                        <div style={{ padding: '10px 14px', borderRadius: 10, background: 'var(--bg-secondary)' }}>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>装扮券</div>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: evt.canUseCoupon ? '#34c759' : '#ff3b30' }}>{evt.canUseCoupon ? '可用' : '不可用'}</div>
+                        </div>
+                      )}
+                      {evt.promotionMethod && (
+                        <div style={{ padding: '10px 14px', borderRadius: 10, background: 'var(--bg-secondary)' }}>
+                          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>让利手法</div>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{evt.promotionMethod}</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </SectionBlock>
+                );
+              })()}
 
               {/* 营收数据 */}
               {(evt.revenueTarget != null || evt.revenueActual != null) && (

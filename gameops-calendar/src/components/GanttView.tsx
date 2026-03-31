@@ -16,10 +16,12 @@ export default function GanttView() {
   const storeEvents = useAppStore((s) => s.events);
   const filterCategories = useAppStore((s) => s.filterCategories);
   const filterRole = useAppStore((s) => s.filterRole);
+  const filterVersionId = useAppStore((s) => s.filterVersionId);
   const searchQuery = useAppStore((s) => s.searchQuery);
   const visibleLayers = useAppStore((s) => s.visibleLayers);
   const getFilteredEvents = useAppStore((s) => s.getFilteredEvents);
-  const events = useMemo(() => getFilteredEvents(), [storeEvents, filterCategories, filterRole, searchQuery, visibleLayers, getFilteredEvents]);
+  const events = useMemo(() => getFilteredEvents(), [storeEvents, filterCategories, filterRole, filterVersionId, searchQuery, visibleLayers, getFilteredEvents]);
+  const versions = useAppStore((s) => s.versions);
   const containerRef = useRef<HTMLDivElement>(null);
   const leftPanelRef = useRef<HTMLDivElement>(null);
   const hasScrolledRef = useRef(false);
@@ -208,6 +210,29 @@ export default function GanttView() {
             return (
               <div key={h.id} style={{ position: 'absolute', top: 0, bottom: 0, left: o * dayWidth, width: h.endDate ? (differenceInDays(parseISO(h.endDate), hD) + 1) * dayWidth : dayWidth, background: 'rgba(255,59,48,0.04)' }}>
                 <span style={{ fontSize: 10, fontWeight: 500, padding: '6px 4px', whiteSpace: 'nowrap', color: 'rgba(255,59,48,0.4)' }}>{h.name}</span>
+              </div>
+            );
+          })}
+
+          {/* 版本区间背景 */}
+          {versions.map((v) => {
+            const vStart = parseISO(v.startDate);
+            const vEnd = parseISO(v.endDate);
+            const startOffset = differenceInDays(vStart, timeRange.start);
+            const endOffset = differenceInDays(vEnd, timeRange.start);
+            if (endOffset < 0 || startOffset > totalDays) return null;
+            const left = Math.max(0, startOffset) * dayWidth;
+            const right = Math.min(totalDays, endOffset + 1) * dayWidth;
+            return (
+              <div key={`ver-${v.id}`} style={{
+                position: 'absolute', top: 0, left, width: right - left, height: '100%',
+                borderLeft: `2px dashed ${v.color}40`, borderRight: `2px dashed ${v.color}40`,
+                background: `${v.color}04`, pointerEvents: 'none', zIndex: 0,
+              }}>
+                <span style={{
+                  position: 'absolute', top: 4, left: 6, fontSize: 10, fontWeight: 700,
+                  color: `${v.color}60`, whiteSpace: 'nowrap', letterSpacing: '0.04em',
+                }}>{v.displayName}</span>
               </div>
             );
           })}

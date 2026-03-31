@@ -1,4 +1,4 @@
-import type { EventCategory, EventSubType, EventStatus, Priority, TeamRole, LayerType } from '../types/index.ts';
+import type { EventCategory, EventSubType, EventStatus, Priority, TeamRole, LayerType, PoolType, RewardType, ModuleCategory, VersionStatus } from '../types/index.ts';
 
 /**
  * Apple SF System Colors — 统一色板
@@ -95,4 +95,61 @@ export const LAYER_CONFIG: Record<LayerType, { name: string; color: string; defa
   holiday: { name: '节假日/赛事', color: '#ff3b30', defaultVisible: true },
   esports: { name: '电竞赛事', color: '#af52de', defaultVisible: true },
   marketing: { name: '市场推广', color: '#ff2d55', defaultVisible: false },
+};
+
+/** 版本状态配置 */
+export const VERSION_STATUS_CONFIG: Record<VersionStatus, { name: string; color: string; bg: string }> = {
+  planning: { name: '规划中', color: '#ff9f0a', bg: 'color-mix(in srgb, #ff9f0a 8%, #f5f5f7)' },
+  active:   { name: '进行中', color: '#34c759', bg: 'color-mix(in srgb, #34c759 8%, #f5f5f7)' },
+  completed:{ name: '已结束', color: '#8e8e93', bg: 'color-mix(in srgb, #8e8e93 8%, #f5f5f7)' },
+};
+
+/** 版本颜色预设（5个版本轮替） */
+export const VERSION_COLORS: string[] = [
+  '#007aff',  // Blue
+  '#34c759',  // Green
+  '#ff9f0a',  // Orange
+  '#af52de',  // Purple
+  '#ff2d55',  // Pink
+];
+
+/** 奖池类型名称 */
+export const POOL_TYPE_NAMES: Record<PoolType, string> = {
+  lucky_pool: '幸运值池',
+  fragment_pool: '碎片池',
+  mixed_pool: '混池',
+  blind_box: '盲盒',
+  jump_pool: '跳池',
+  fragment_exchange: '碎片兑换',
+  rare_pool: '珍奇池',
+  costume_pool: '装扮券奖池',
+  live_sale: '直播售卖',
+  other_pool: '其他',
+};
+
+/** 奖励类型名称 */
+export const REWARD_TYPE_NAMES: Record<RewardType, string> = {
+  s_plus_character: 'S+角色',
+  s_character: 'S角色',
+  s_melee: 'S近战',
+  s_plus_melee: 'S+近战',
+  s_gun_skin: 'S枪皮',
+  s_plus_gun_skin: 'S+枪皮',
+  a_gun: 'A级枪械',
+  a_avatar: 'A级avatar',
+  accessory: '挂饰',
+  equipment: '配件',
+  costume_ticket: '装扮券',
+  other_reward: '其他',
+};
+
+/** 模块分类名称 */
+export const MODULE_CATEGORY_NAMES: Record<ModuleCategory, string> = {
+  melee: '近战',
+  character: '角色',
+  weapon: '枪械',
+  season_book: '赛季手册',
+  accessory: '挂饰/配件',
+  costume: '装扮',
+  other_module: '其他',
 };

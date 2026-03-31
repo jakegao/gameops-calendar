@@ -10,13 +10,14 @@ import EventModal from './components/EventModal.tsx';
 import DetailPanel from './components/DetailPanel.tsx';
 import TemplateModal from './components/TemplateModal.tsx';
 import ExportModal from './components/ExportModal.tsx';
+import VersionManager from './components/VersionManager.tsx';
 import Snackbar from './components/Snackbar.tsx';
 import HelpModal from './components/HelpModal.tsx';
 
 const VIEW_LABELS = { calendar: '日历', gantt: '时间线', board: '看板', dashboard: '数据面板' } as const;
 
 export default function App() {
-  const { currentView, setCurrentView, openEventModal, isEventModalOpen, isTemplateModalOpen, isExportModalOpen, isDetailPanelOpen } = useAppStore();
+  const { currentView, setCurrentView, openEventModal, isEventModalOpen, isTemplateModalOpen, isExportModalOpen, isDetailPanelOpen, isVersionManagerOpen } = useAppStore();
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('gameops-theme') === 'dark');
@@ -41,7 +42,7 @@ export default function App() {
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     const tag = (e.target as HTMLElement).tagName;
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return;
-    const anyModalOpen = isEventModalOpen || isTemplateModalOpen || isExportModalOpen || isDetailPanelOpen || showHelp;
+    const anyModalOpen = isEventModalOpen || isTemplateModalOpen || isExportModalOpen || isDetailPanelOpen || isVersionManagerOpen || showHelp;
     if (e.key === '?' || (e.key === '/' && e.shiftKey)) { if (!anyModalOpen || showHelp) { e.preventDefault(); setShowHelp((v) => !v); } return; }
     if (anyModalOpen) return;
     switch (e.key) {
@@ -74,6 +75,7 @@ export default function App() {
       <EventModal />
       <TemplateModal />
       <ExportModal />
+      <VersionManager />
       <Snackbar />
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
     </div>

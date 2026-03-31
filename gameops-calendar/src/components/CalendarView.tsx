@@ -23,10 +23,11 @@ export default function CalendarView() {
   const storeEvents = useAppStore((s) => s.events);
   const filterCategories = useAppStore((s) => s.filterCategories);
   const filterRole = useAppStore((s) => s.filterRole);
+  const filterVersionId = useAppStore((s) => s.filterVersionId);
   const searchQuery = useAppStore((s) => s.searchQuery);
   const visibleLayers = useAppStore((s) => s.visibleLayers);
   const getFilteredEvents = useAppStore((s) => s.getFilteredEvents);
-  const events = useMemo(() => getFilteredEvents(), [storeEvents, filterCategories, filterRole, searchQuery, visibleLayers, getFilteredEvents]);
+  const events = useMemo(() => getFilteredEvents(), [storeEvents, filterCategories, filterRole, filterVersionId, searchQuery, visibleLayers, getFilteredEvents]);
 
   const handleDoubleClickDate = useCallback((day: Date) => {
     setDefaultStartDate(format(day, 'yyyy-MM-dd'));
@@ -443,8 +444,8 @@ function WeekView({ currentDate, events, holidays, openDetailPanel, onDoubleClic
 }) {
   const days = eachDayOfInterval({ start: startOfWeek(currentDate, { weekStartsOn: 0 }), end: endOfWeek(currentDate, { weekStartsOn: 0 }) });
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'auto', background: 'var(--bg-primary)' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', flex: 1, minHeight: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', background: 'var(--bg-primary)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', flex: 1, minHeight: 0, overflow: 'hidden' }}>
         {days.map((day) => {
           const de = eventsForDay(events, day); const dh = holidaysForDay(holidays, day); const td = isToday(day);
           return (

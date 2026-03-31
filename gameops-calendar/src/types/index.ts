@@ -56,6 +56,74 @@ export type TeamRole =
   | 'marketing'    // 市场推广
   | 'data_analyst'; // 数据分析
 
+/** 游戏版本（TK项目组版本体系） */
+export type VersionStatus = 'planning' | 'active' | 'completed';
+
+export interface GameVersion {
+  id: string;
+  name: string;              // 如 "260108" — 版本代号
+  displayName: string;       // 如 "V1 · 2026冬季版本"
+  startDate: string;         // ISO date
+  endDate: string;           // ISO date
+  status: VersionStatus;
+  color: string;             // 版本标识色
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** 奖池/抽奖形式（TK项目组业务字段） */
+export type PoolType =
+  | 'lucky_pool'       // 幸运值池
+  | 'fragment_pool'    // 碎片池
+  | 'mixed_pool'       // 混池
+  | 'blind_box'        // 盲盒
+  | 'jump_pool'        // 跳池
+  | 'fragment_exchange' // 碎片兑换
+  | 'rare_pool'        // 珍奇池
+  | 'costume_pool'     // 装扮券奖池
+  | 'live_sale'        // 直播售卖
+  | 'other_pool';      // 其他
+
+/** 奖励类型 */
+export type RewardType =
+  | 's_plus_character'  // S+角色
+  | 's_character'       // S角色
+  | 's_melee'           // S近战
+  | 's_plus_melee'      // S+近战
+  | 's_gun_skin'        // S枪皮
+  | 's_plus_gun_skin'   // S+枪皮
+  | 'a_gun'             // A级枪械
+  | 'a_avatar'          // A级avatar
+  | 'accessory'         // 挂饰
+  | 'equipment'         // 配件
+  | 'costume_ticket'    // 装扮券
+  | 'other_reward';     // 其他
+
+/** 模块分类（TK项目组排期维度） */
+export type ModuleCategory =
+  | 'melee'          // 近战
+  | 'character'      // 角色
+  | 'weapon'         // 枪械
+  | 'season_book'    // 赛季手册
+  | 'accessory'      // 挂饰/配件
+  | 'costume'        // 装扮
+  | 'other_module';  // 其他
+
+/** 导出模板（角色定制化输出） */
+export type ExportTargetRole = 'market' | 'ops_full' | 'planner' | 'tech';
+
+export interface ExportTemplate {
+  id: string;
+  name: string;
+  targetRole: ExportTargetRole;
+  visibleFields: string[];
+  format: ExportFormat;
+  includeGantt: boolean;
+  includeTable: boolean;
+  isDefault: boolean;
+}
+
 /** 游戏运营活动 */
 export interface GameEvent {
   id: string;
@@ -77,6 +145,17 @@ export interface GameEvent {
   notes: string;
   createdAt: string;
   updatedAt: string;
+  // === TK项目组拓展字段 ===
+  versionId?: string;           // 关联版本ID
+  poolType?: PoolType;          // 奖池类型
+  coreRewards?: string;         // 核心奖励描述
+  rewardType?: RewardType;      // 奖励类型
+  drawFormat?: string;          // 抽奖形式描述
+  moduleCategory?: ModuleCategory; // 模块分类
+  maxDiscount?: number;         // 最大折扣
+  actualPrice?: number;         // 实际获得价格
+  canUseCoupon?: boolean;       // 是否可用装扮券
+  promotionMethod?: string;     // 让利手法
 }
 
 /** 节假日/特殊日期 */

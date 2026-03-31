@@ -13,10 +13,11 @@ export default function BoardView() {
   const storeEvents = useAppStore((s) => s.events);
   const filterCategories = useAppStore((s) => s.filterCategories);
   const filterRole = useAppStore((s) => s.filterRole);
+  const filterVersionId = useAppStore((s) => s.filterVersionId);
   const searchQuery = useAppStore((s) => s.searchQuery);
   const visibleLayers = useAppStore((s) => s.visibleLayers);
   const getFilteredEvents = useAppStore((s) => s.getFilteredEvents);
-  const events = useMemo(() => getFilteredEvents(), [storeEvents, filterCategories, filterRole, searchQuery, visibleLayers, getFilteredEvents]);
+  const events = useMemo(() => getFilteredEvents(), [storeEvents, filterCategories, filterRole, filterVersionId, searchQuery, visibleLayers, getFilteredEvents]);
   const [showEmpty, setShowEmpty] = useState(true);
 
   const allColumns = STATUS_ORDER.map((status) => ({

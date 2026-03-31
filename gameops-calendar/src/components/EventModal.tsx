@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore.ts';
-import { CATEGORY_NAMES, SUBTYPE_NAMES, STATUS_CONFIG, PRIORITY_CONFIG, ROLE_CONFIG, CATEGORY_COLORS, SUBTYPE_CATEGORY } from '../constants/index.ts';
-import type { EventCategory, EventSubType, EventStatus, Priority, TeamRole } from '../types/index.ts';
+import { CATEGORY_NAMES, SUBTYPE_NAMES, STATUS_CONFIG, PRIORITY_CONFIG, ROLE_CONFIG, CATEGORY_COLORS, SUBTYPE_CATEGORY, POOL_TYPE_NAMES, MODULE_CATEGORY_NAMES } from '../constants/index.ts';
+import type { EventCategory, EventSubType, EventStatus, Priority, TeamRole, PoolType, ModuleCategory } from '../types/index.ts';
 
 const CATEGORIES = Object.keys(CATEGORY_NAMES) as EventCategory[];
 const STATUSES = Object.keys(STATUS_CONFIG) as EventStatus[];
@@ -31,6 +31,7 @@ const inputErrStyle: React.CSSProperties = { ...inputStyle, borderColor: '#ff3b3
 export default function EventModal() {
   const { isEventModalOpen, editingEvent, closeEventModal, addEvent, updateEvent, defaultStartDate } = useAppStore();
   const events = useAppStore((s) => s.events);
+  const versions = useAppStore((s) => s.versions);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<EventCategory>('paid');
@@ -47,6 +48,14 @@ export default function EventModal() {
   const [dependencies, setDependencies] = useState<string[]>([]);
   const [conflictWarning, setConflictWarning] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  // TK拓展字段
+  const [versionId, setVersionId] = useState('');
+  const [poolType, setPoolType] = useState<PoolType | ''>('');
+  const [coreRewards, setCoreRewards] = useState('');
+  const [moduleCategory, setModuleCategory] = useState<ModuleCategory | ''>('');
+  const [maxDiscount, setMaxDiscount] = useState('');
+  const [canUseCoupon, setCanUseCoupon] = useState(false);
+  const [promotionMethod, setPromotionMethod] = useState('');
 
   useEffect(() => {
     if (editingEvent) {
@@ -56,17 +65,38 @@ export default function EventModal() {
       setTeamRoles([...editingEvent.teamRoles]); setTags(editingEvent.tags.join(', '));
       setNotes(editingEvent.notes); setRevenueTarget(editingEvent.revenueTarget?.toString() ?? '');
       setDependencies([...editingEvent.dependencies]);
+      // TK字段
+      setVersionId(editingEvent.versionId || '');
+      setPoolType(editingEvent.poolType || '');
+      setCoreRewards(editingEvent.coreRewards || '');
+      setModuleCategory(editingEvent.moduleCategory || '');
+      setMaxDiscount(editingEvent.maxDiscount?.toString() ?? '');
+      setCanUseCoupon(editingEvent.canUseCoupon ?? false);
+      setPromotionMethod(editingEvent.promotionMethod || '');
     } else {
       setTitle(''); setDescription(''); setCategory('paid'); setSubType('limited_pack');
       setPriority('P1'); setStatus('draft');
       setStartDate(defaultStartDate || ''); setEndDate(defaultStartDate || '');
       setOwner(''); setTeamRoles([]); setTags(''); setNotes(''); setRevenueTarget('');
       setDependencies([]);
+      // TK字段重置 — 自动匹配版本
+      const dateToMatch = defaultStartDate || '';
+      const matchedVersion = dateToMatch ? versions.find((v) => dateToMatch >= v.startDate && dateToMatch <= v.endDate) : null;
+      setVersionId(matchedVersion?.id || '');
+      setPoolType(''); setCoreRewards(''); setModuleCategory('');
+      setMaxDiscount(''); setCanUseCoupon(false); setPromotionMethod('');
     }
     setSubmitted(false); setConflictWarning(null);
-  }, [editingEvent, isEventModalOpen, defaultStartDate]);
+  }, [editingEvent, isEventModalOpen, defaultStartDate, versions]);
 
   useEffect(() => { if (startDate && endDate && endDate < startDate) setEndDate(startDate); }, [startDate]);
+
+  // 日期变更自动重匹配版本（仅在用户未手动选定版本时）
+  useEffect(() => {
+    if (!startDate || editingEvent) return;
+    const matched = versions.find((v) => startDate >= v.startDate && startDate <= v.endDate);
+    if (matched && !versionId) setVersionId(matched.id);
+  }, [startDate, versions]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => { if (e.key === 'Escape') closeEventModal(); }, [closeEventModal]);
   useEffect(() => {
@@ -106,6 +136,14 @@ export default function EventModal() {
       dependencies, notes,
       revenueTarget: revenueTarget ? Math.max(0, Number(revenueTarget)) : undefined,
       revenueActual: editingEvent?.revenueActual,
+      // TK拓展字段
+      versionId: versionId || undefined,
+      poolType: poolType || undefined,
+      coreRewards: coreRewards || undefined,
+      moduleCategory: moduleCategory || undefined,
+      maxDiscount: maxDiscount ? Number(maxDiscount) : undefined,
+      canUseCoupon: canUseCoupon || undefined,
+      promotionMethod: promotionMethod || undefined,
     };
     editingEvent ? updateEvent(editingEvent.id, data) : addEvent(data);
     closeEventModal();
@@ -221,6 +259,81 @@ export default function EventModal() {
                 onChange={(e) => setRevenueTarget(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'e' || e.key === 'E' || e.key === '-') e.preventDefault(); }}
                 placeholder="单位：元" onFocus={inputFocus} onBlur={inputBlur} />
+            </div>
+          </div>
+
+          {/* 版本 + 模块分类 */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div>
+              <Label text="所属版本" />
+              <select style={inputStyle} value={versionId} onChange={(e) => setVersionId(e.target.value)}
+                onFocus={inputFocus as any} onBlur={inputBlur as any}>
+                <option value="">未关联版本</option>
+                {[...versions].sort((a, b) => a.startDate.localeCompare(b.startDate)).map((v) => (
+                  <option key={v.id} value={v.id}>{v.displayName}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label text="模块分类" />
+              <select style={inputStyle} value={moduleCategory} onChange={(e) => setModuleCategory(e.target.value as ModuleCategory)}
+                onFocus={inputFocus as any} onBlur={inputBlur as any}>
+                <option value="">未分类</option>
+                {(Object.keys(MODULE_CATEGORY_NAMES) as ModuleCategory[]).map((m) => (
+                  <option key={m} value={m}>{MODULE_CATEGORY_NAMES[m]}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* 奖池类型 + 核心奖励 */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div>
+              <Label text="奖池类型" />
+              <select style={inputStyle} value={poolType} onChange={(e) => setPoolType(e.target.value as PoolType)}
+                onFocus={inputFocus as any} onBlur={inputBlur as any}>
+                <option value="">未设置</option>
+                {(Object.keys(POOL_TYPE_NAMES) as PoolType[]).map((p) => (
+                  <option key={p} value={p}>{POOL_TYPE_NAMES[p]}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label text="核心奖励" />
+              <input style={inputStyle} value={coreRewards} onChange={(e) => setCoreRewards(e.target.value)}
+                placeholder="如：S角色-美杜莎 + S近战-马来剑" onFocus={inputFocus} onBlur={inputBlur} />
+            </div>
+          </div>
+
+          {/* 折扣 + 装扮券 + 让利手法 */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+            <div>
+              <Label text="最大折扣" />
+              <input type="number" min="0" step="1" style={inputStyle} value={maxDiscount}
+                onChange={(e) => setMaxDiscount(e.target.value)} placeholder="如 180"
+                onFocus={inputFocus} onBlur={inputBlur} />
+            </div>
+            <div>
+              <Label text="可用装扮券" />
+              <div style={{ display: 'flex', alignItems: 'center', height: 42, gap: 10 }}>
+                <button onClick={() => setCanUseCoupon(!canUseCoupon)} style={{
+                  width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
+                  background: canUseCoupon ? 'var(--accent)' : 'var(--bg-tertiary)',
+                  position: 'relative', transition: 'background .2s',
+                }}>
+                  <div style={{
+                    width: 20, height: 20, borderRadius: '50%', background: '#fff',
+                    position: 'absolute', top: 2, left: canUseCoupon ? 22 : 2,
+                    boxShadow: '0 1px 3px rgba(0,0,0,.2)', transition: 'left .2s',
+                  }} />
+                </button>
+                <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{canUseCoupon ? '是' : '否'}</span>
+              </div>
+            </div>
+            <div>
+              <Label text="让利手法" />
+              <input style={inputStyle} value={promotionMethod} onChange={(e) => setPromotionMethod(e.target.value)}
+                placeholder="如 20抽赠送活动" onFocus={inputFocus} onBlur={inputBlur} />
             </div>
           </div>
 
